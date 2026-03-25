@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EscanPro — Lector de Productos</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131c;
+    --surface2: #1c1c2e;
+    --border: #2a2a45;
+    --accent: #00e5c0;
+    --accent2: #7c5cfc;
+    --warn: #ff6b6b;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --success: #00c896;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background mesh */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 20%, rgba(124,92,252,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 80% 80%, rgba(0,229,192,0.08) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 24px 16px 80px;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 32px 0 28px;
+  }
+
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--text) 30%, var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .tagline {
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* Step indicator */
+  .steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 28px;
+  }
+
+  .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .step-num {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    transition: all 0.3s;
+  }
+
+  .step.active .step-num {
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 16px rgba(0,229,192,0.3);
+  }
+
+  .step.done .step-num {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
+  }
+
+  .step-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .step.active .step-label { color: var(--accent); }
+  .step.done .step-label { color: var(--success); }
+
+  .step-line {
+    width: 48px;
+    height: 2px;
+    background: var(--border);
+    margin-bottom: 18px;
+    transition: background 0.3s;
+  }
+
+  .step-line.done { background: var(--accent); }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    opacity: 0.6;
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Camera zone */
+  .camera-zone {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: var(--surface2);
+    border: 2px dashed var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.3s;
+  }
+
+  .camera-zone:hover { border-color: var(--accent); }
+
+  #video, #canvas-preview {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: none;
+  }
+
+  .camera-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--muted);
+  }
+
+  .cam-icon {
+    font-size: 48px;
+    opacity: 0.4;
+  }
+
+  .cam-text {
+    font-size: 13px;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  /* Viewfinder overlay */
+  .viewfinder {
+    position: absolute;
+    inset: 16px;
+    border: none;
+    pointer-events: none;
+    display: none;
+  }
+
+  .viewfinder::before, .viewfinder::after,
+  .vf-br::before, .vf-br::after {
+    content: '';
+    position: absolute;
+    width: 24px; height: 24px;
+    border-color: var(--accent);
+    border-style: solid;
+    opacity: 0.8;
+  }
+
+  .viewfinder::before { top: 0; left: 0; border-width: 2px 0 0 2px; border-radius: 4px 0 0 0; }
+  .viewfinder::after  { top: 0; right: 0; border-width: 2px 2px 0 0; border-radius: 0 4px 0 0; }
+  .vf-br::before { bottom: 0; left: 0; border-width: 0 0 2px 2px; border-radius: 0 0 0 4px; }
+  .vf-br::after  { bottom: 0; right: 0; border-width: 0 2px 2px 0; border-radius: 0 0 4px 0; }
+
+  .scan-line {
+    position: absolute;
+    left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    animation: scan 2s ease-in-out infinite;
+    display: none;
+    top: 0;
+  }
+
+  @keyframes scan {
+    0%   { top: 10%; opacity: 1; }
+    100% { top: 90%; opacity: 0.2; }
+  }
+
+  /* Buttons */
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: var(--bg);
+    font-weight: 700;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(0,229,192,0.25);
+  }
+
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--text);
+  }
+
+  .btn-outline:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .btn-danger {
+    background: rgba(255,107,107,0.1);
+    border: 1.5px solid rgba(255,107,107,0.3);
+    color: var(--warn);
+  }
+
+  .btn-danger:hover {
+    background: rgba(255,107,107,0.2);
+  }
+
+  .btn-wa {
+    background: linear-gradient(135deg, #25d366, #128c7e);
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 16px;
+  }
+
+  .btn-wa:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(37,211,102,0.35);
+  }
+
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .btn-row .btn { flex: 1; }
+
+  /* Form fields */
+  .field {
+    margin-bottom: 16px;
+  }
+
+  label {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .input-wrap {
+    position: relative;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 40px 12px 14px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  input[type="text"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,229,192,0.1);
+  }
+
+  input[type="text"].readonly {
+    opacity: 0.7;
+    cursor: default;
+  }
+
+  .edit-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 16px;
+    padding: 4px;
+    transition: color 0.2s;
+    line-height: 1;
+  }
+
+  .edit-btn:hover { color: var(--accent); }
+
+  /* AI Processing */
+  .ai-processing {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 24px;
+    text-align: center;
+  }
+
+  .ai-spinner {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-right-color: var(--accent2);
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .ai-label {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .ai-status {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  /* Photo preview */
+  .photo-thumb {
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+  }
+
+  .photo-thumb img {
+    width: 100%;
+    display: block;
+    object-fit: cover;
+    max-height: 200px;
+  }
+
+  /* Tag badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(0,229,192,0.1);
+    border: 1px solid rgba(0,229,192,0.25);
+    border-radius: 20px;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.5px;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-size: 13px;
+    color: var(--text);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 100;
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { border-color: var(--warn); color: var(--warn); }
+  .toast.success { border-color: var(--success); color: var(--success); }
+
+  /* Hidden input */
+  #file-input { display: none; }
+
+  /* Section visibility */
+  .section { display: none; }
+  .section.visible { display: block; }
+
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 16px 0;
+  }
+
+  /* WhatsApp number input */
+  .wa-input-wrap {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .wa-prefix {
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .wa-input-wrap input {
+    flex: 1;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">📦</div>
+      <h1>EscanPro</h1>
+    </div>
+    <p class="tagline">Lector inteligente de productos</p>
+  </header>
+
+  <!-- Steps -->
+  <div class="steps">
+    <div class="step active" id="s1">
+      <div class="step-num">1</div>
+      <div class="step-label">Foto</div>
+    </div>
+    <div class="step-line" id="l1"></div>
+    <div class="step" id="s2">
+      <div class="step-num">2</div>
+      <div class="step-label">Datos</div>
+    </div>
+    <div class="step-line" id="l2"></div>
+    <div class="step" id="s3">
+      <div class="step-num">3</div>
+      <div class="step-label">Enviar</div>
+    </div>
+  </div>
+
+  <!-- SECTION 1: Camera -->
+  <div id="sec-camera" class="section visible">
+    <div class="card">
+      <div class="card-title">📷 Captura el producto</div>
+
+      <div class="camera-zone" id="camera-zone" onclick="document.getElementById('file-input').click()">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas-preview" style="display:none"></canvas>
+        <div class="camera-placeholder" id="placeholder">
+          <div class="cam-icon">📱</div>
+          <div class="cam-text">Toca para tomar foto<br><span style="font-size:11px;color:var(--muted)">o elige de galería</span></div>
+        </div>
+        <div class="viewfinder" id="viewfinder"><div class="vf-br"></div></div>
+        <div class="scan-line" id="scan-line"></div>
+      </div>
+
+      <input type="file" id="file-input" accept="image/*" capture="environment">
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="activateCamera()" id="btn-cam">
+          📷 Cámara
+        </button>
+        <button class="btn btn-outline" onclick="document.getElementById('file-input').click()">
+          🖼️ Galería
+        </button>
+      </div>
+
+      <div style="margin-top:12px">
+        <button class="btn btn-primary" id="btn-analyze" onclick="analyzePhoto()" disabled>
+          ✨ Analizar con IA
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: AI Processing -->
+  <div id="sec-processing" class="section">
+    <div class="card">
+      <div class="ai-processing" style="display:flex">
+        <div class="ai-spinner"></div>
+        <div class="ai-status" id="ai-status-text">Analizando imagen...</div>
+        <div class="ai-label" id="ai-sub">La IA está leyendo los datos del producto</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: Data review -->
+  <div id="sec-data" class="section">
+    <div class="card">
+      <div class="card-title">📋 Datos detectados <span class="badge">✓ IA</span></div>
+
+      <div class="photo-thumb" id="photo-thumb"></div>
+
+      <div class="field">
+        <label>Nombre del Producto</label>
+        <div class="input-wrap">
+          <input type="text" id="field-nombre" class="readonly" readonly placeholder="—">
+          <button class="edit-btn" onclick="toggleEdit('field-nombre', this)" title="Editar">✏️</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Presentación / Descripción</label>
+        <div class="input-wrap">
+          <input type="text" id="field-presentacion" class="readonly" readonly placeholder="—">
+          <button class="edit-btn" onclick="toggleEdit('field-presentacion', this)" title="Editar">✏️</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-danger" onclick="resetAll()">🔄 Nueva foto</button>
+        <button class="btn btn-outline" onclick="showSendSection()">➡️ Siguiente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4: Send via WhatsApp -->
+  <div id="sec-send" class="section">
+    <div class="card">
+      <div class="card-title">💬 Enviar por WhatsApp</div>
+
+      <div class="photo-thumb" id="photo-thumb2"></div>
+
+      <div style="background:var(--surface2);border-radius:12px;padding:14px;margin-bottom:16px;border:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Resumen</div>
+        <div style="font-size:13px;line-height:1.8">
+          📦 <strong id="summary-nombre">—</strong><br>
+          📋 <span id="summary-presentacion" style="color:var(--muted)">—</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Número de WhatsApp</label>
+        <div class="wa-input-wrap">
+          <div class="wa-prefix">🇲🇽 +52</div>
+          <input type="text" id="wa-number" placeholder="55 1234 5678" maxlength="14">
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">Solo el número, sin código de país</div>
+      </div>
+
+      <button class="btn btn-wa" onclick="sendWhatsApp()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Enviar por WhatsApp
+      </button>
+
+      <div style="margin-top:12px">
+        <button class="btn btn-outline" onclick="goBackToData()">← Editar datos</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let capturedImage = null;
+let stream = null;
+let cameraMode = false;
+
+const fileInput = document.getElementById('file-input');
+const video = document.getElementById('video');
+const canvasPreview = document.getElementById('canvas-preview');
+const placeholder = document.getElementById('placeholder');
+const viewfinder = document.getElementById('viewfinder');
+const scanLine = document.getElementById('scan-line');
+const btnAnalyze = document.getElementById('btn-analyze');
+const btnCam = document.getElementById('btn-cam');
+
+// File input change
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  stopCamera();
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    capturedImage = ev.target.result;
+    showImagePreview(capturedImage);
+  };
+  reader.readAsDataURL(file);
+});
+
+function showImagePreview(src) {
+  canvasPreview.style.display = 'none';
+  const img = new Image();
+  img.onload = () => {
+    canvasPreview.width = img.width;
+    canvasPreview.height = img.height;
+    const ctx = canvasPreview.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    canvasPreview.style.display = 'block';
+  };
+  img.src = src;
+  placeholder.style.display = 'none';
+  viewfinder.style.display = 'none';
+  scanLine.style.display = 'none';
+  btnAnalyze.disabled = false;
+  cameraMode = false;
+}
+
+async function activateCamera() {
+  try {
+    if (stream) { stopCamera(); return; }
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    video.srcObject = stream;
+    video.style.display = 'block';
+    canvasPreview.style.display = 'none';
+    placeholder.style.display = 'none';
+    viewfinder.style.display = 'block';
+    scanLine.style.display = 'block';
+    btnCam.innerHTML = '📸 Capturar';
+    btnCam.onclick = captureFromCamera;
+    cameraMode = true;
+  } catch(e) {
+    showToast('No se pudo acceder a la cámara. Usa la opción Galería.', 'error');
+    document.getElementById('file-input').removeAttribute('capture');
+    document.getElementById('file-input').click();
+  }
+}
+
+function captureFromCamera() {
+  if (!stream) return;
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  capturedImage = canvas.toDataURL('image/jpeg', 0.9);
+  stopCamera();
+  showImagePreview(capturedImage);
+  btnCam.innerHTML = '📷 Cámara';
+  btnCam.onclick = activateCamera;
+  showToast('¡Foto capturada! ✓', 'success');
+}
+
+function stopCamera() {
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+    video.style.display = 'none';
+    viewfinder.style.display = 'none';
+    scanLine.style.display = 'none';
+  }
+}
+
+function setStep(n) {
+  [1,2,3].forEach(i => {
+    const s = document.getElementById('s'+i);
+    s.classList.remove('active','done');
+    if (i < n) s.classList.add('done');
+    else if (i === n) s.classList.add('active');
+  });
+  [1,2].forEach(i => {
+    const l = document.getElementById('l'+i);
+    l.classList.toggle('done', i < n);
+  });
+}
+
+function showSection(id) {
+  ['sec-camera','sec-processing','sec-data','sec-send'].forEach(s => {
+    document.getElementById(s).classList.remove('visible');
+  });
+  document.getElementById(id).classList.add('visible');
+}
+
+async function analyzePhoto() {
+  if (!capturedImage) return;
+  stopCamera();
+  setStep(2);
+  showSection('sec-processing');
+
+  const statuses = [
+    ['Analizando imagen...', 'La IA está procesando la fotografía'],
+    ['Reconociendo texto...', 'Leyendo etiquetas y empaque'],
+    ['Extrayendo datos...', 'Identificando nombre y presentación'],
+  ];
+
+  let i = 0;
+  const interval = setInterval(() => {
+    i = (i+1) % statuses.length;
+    document.getElementById('ai-status-text').textContent = statuses[i][0];
+    document.getElementById('ai-sub').textContent = statuses[i][1];
+  }, 1200);
+
+  try {
+    const base64 = capturedImage.split(',')[1];
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
+            { type: 'text', text: 'Eres un lector de productos. Analiza esta imagen y extrae SOLO: 1) El nombre del producto (marca y nombre), 2) La presentación (tamaño, cantidad, volumen, peso, variante o sabor). Responde ÚNICAMENTE en formato JSON puro sin markdown, sin backticks: {"nombre":"...","presentacion":"..."}. Si no puedes identificar algún campo, usa "No identificado".' }
+          ]
+        }]
+      })
+    });
+
+    clearInterval(interval);
+    const data = await resp.json();
+    const text = data.content?.find(b => b.type === 'text')?.text || '{}';
+    let parsed = { nombre: 'No identificado', presentacion: 'No identificado' };
+
+    try {
+      const clean = text.replace(/```json|```/g, '').trim();
+      parsed = JSON.parse(clean);
+    } catch(e) {
+      // fallback regex
+      const nm = text.match(/"nombre"\s*:\s*"([^"]+)"/);
+      const pr = text.match(/"presentacion"\s*:\s*"([^"]+)"/);
+      if (nm) parsed.nombre = nm[1];
+      if (pr) parsed.presentacion = pr[1];
+    }
+
+    document.getElementById('field-nombre').value = parsed.nombre || 'No identificado';
+    document.getElementById('field-presentacion').value = parsed.presentacion || 'No identificado';
+
+    // thumbnail
+    const thumbHtml = `<img src="${capturedImage}" alt="producto">`;
+    document.getElementById('photo-thumb').innerHTML = thumbHtml;
+    document.getElementById('photo-thumb2').innerHTML = thumbHtml;
+
+    setStep(2);
+    showSection('sec-data');
+    showToast('✓ Datos extraídos correctamente', 'success');
+
+  } catch(e) {
+    clearInterval(interval);
+    document.getElementById('field-nombre').value = 'Error al analizar';
+    document.getElementById('field-presentacion').value = 'Edita manualmente';
+    const thumbHtml = `<img src="${capturedImage}" alt="producto">`;
+    document.getElementById('photo-thumb').innerHTML = thumbHtml;
+    document.getElementById('photo-thumb2').innerHTML = thumbHtml;
+    setStep(2);
+    showSection('sec-data');
+    showToast('Error de análisis — puedes editar manualmente', 'error');
+  }
+}
+
+function toggleEdit(fieldId, btn) {
+  const input = document.getElementById(fieldId);
+  if (input.readOnly) {
+    input.readOnly = false;
+    input.classList.remove('readonly');
+    input.focus();
+    btn.textContent = '✅';
+  } else {
+    input.readOnly = true;
+    input.classList.add('readonly');
+    btn.textContent = '✏️';
+    showToast('Campo actualizado', 'success');
+  }
+}
+
+function showSendSection() {
+  const nombre = document.getElementById('field-nombre').value;
+  const pres = document.getElementById('field-presentacion').value;
+  document.getElementById('summary-nombre').textContent = nombre;
+  document.getElementById('summary-presentacion').textContent = pres;
+  setStep(3);
+  showSection('sec-send');
+}
+
+function goBackToData() {
+  setStep(2);
+  showSection('sec-data');
+}
+
+function sendWhatsApp() {
+  const nombre = document.getElementById('field-nombre').value;
+  const pres = document.getElementById('field-presentacion').value;
+  const waRaw = document.getElementById('wa-number').value.replace(/\D/g,'');
+
+  if (!waRaw || waRaw.length < 10) {
+    showToast('Ingresa un número válido de 10 dígitos', 'error');
+    return;
+  }
+
+  const numero = '52' + waRaw;
+  const msg = encodeURIComponent(
+    `📦 *Producto Escaneado*\n\n` +
+    `🏷️ *Nombre:* ${nombre}\n` +
+    `📋 *Presentación:* ${pres}\n\n` +
+    `_Enviado desde EscanPro_`
+  );
+
+  const url = `https://wa.me/${numero}?text=${msg}`;
+  window.open(url, '_blank');
+  showToast('¡Abriendo WhatsApp! 🟢', 'success');
+}
+
+function resetAll() {
+  capturedImage = null;
+  stopCamera();
+  canvasPreview.style.display = 'none';
+  placeholder.style.display = 'flex';
+  btnAnalyze.disabled = true;
+  btnCam.innerHTML = '📷 Cámara';
+  btnCam.onclick = activateCamera;
+  fileInput.value = '';
+  document.getElementById('field-nombre').value = '';
+  document.getElementById('field-presentacion').value = '';
+  setStep(1);
+  showSection('sec-camera');
+}
+
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
