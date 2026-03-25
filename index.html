@@ -29,7 +29,6 @@
     overflow-x: hidden;
   }
 
-  /* Background mesh */
   body::before {
     content: '';
     position: fixed;
@@ -49,7 +48,6 @@
     padding: 24px 16px 80px;
   }
 
-  /* Header */
   header {
     text-align: center;
     padding: 32px 0 28px;
@@ -87,7 +85,6 @@
     text-transform: uppercase;
   }
 
-  /* Step indicator */
   .steps {
     display: flex;
     align-items: center;
@@ -115,39 +112,21 @@
     transition: all 0.3s;
   }
 
-  .step.active .step-num {
-    border-color: var(--accent);
-    color: var(--accent);
-    box-shadow: 0 0 16px rgba(0,229,192,0.3);
-  }
+  .step.active .step-num { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 16px rgba(0,229,192,0.3); }
+  .step.done .step-num { background: var(--accent); border-color: var(--accent); color: var(--bg); }
 
-  .step.done .step-num {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: var(--bg);
-  }
-
-  .step-label {
-    font-size: 10px;
-    color: var(--muted);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
-
+  .step-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
   .step.active .step-label { color: var(--accent); }
   .step.done .step-label { color: var(--success); }
 
   .step-line {
-    width: 48px;
-    height: 2px;
+    width: 40px; height: 2px;
     background: var(--border);
     margin-bottom: 18px;
     transition: background 0.3s;
   }
-
   .step-line.done { background: var(--accent); }
 
-  /* Card */
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -180,6 +159,89 @@
     gap: 8px;
   }
 
+  /* API Key section */
+  .apikey-bar {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  .apikey-bar.valid { border-color: rgba(0,229,192,0.4); }
+  .apikey-bar.invalid { border-color: rgba(255,107,107,0.4); }
+
+  .apikey-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .apikey-title {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .apikey-status {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: rgba(107,107,138,0.15);
+    color: var(--muted);
+  }
+
+  .apikey-status.ok { background: rgba(0,229,192,0.1); color: var(--accent); }
+  .apikey-status.err { background: rgba(255,107,107,0.1); color: var(--warn); }
+
+  .apikey-input-wrap {
+    display: flex;
+    gap: 8px;
+  }
+
+  .apikey-input-wrap input {
+    flex: 1;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+    letter-spacing: 1px;
+  }
+
+  .apikey-input-wrap input:focus { border-color: var(--accent); }
+
+  .btn-save-key {
+    padding: 10px 16px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border: none;
+    border-radius: 10px;
+    color: var(--bg);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.2s;
+  }
+
+  .btn-save-key:hover { opacity: 0.85; }
+
+  .apikey-hint {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 8px;
+    line-height: 1.6;
+  }
+
+  .apikey-hint a { color: var(--accent2); text-decoration: none; }
+
   /* Camera zone */
   .camera-zone {
     position: relative;
@@ -195,11 +257,7 @@
 
   .camera-zone:hover { border-color: var(--accent); }
 
-  #video, #canvas-preview {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    display: none;
-  }
+  #video, #canvas-preview { width: 100%; height: 100%; object-fit: cover; display: none; }
 
   .camera-placeholder {
     position: absolute;
@@ -212,315 +270,139 @@
     color: var(--muted);
   }
 
-  .cam-icon {
-    font-size: 48px;
-    opacity: 0.4;
-  }
+  .cam-icon { font-size: 48px; opacity: 0.4; }
+  .cam-text { font-size: 13px; text-align: center; line-height: 1.6; }
 
-  .cam-text {
-    font-size: 13px;
-    text-align: center;
-    line-height: 1.6;
-  }
+  .viewfinder { position: absolute; inset: 16px; border: none; pointer-events: none; display: none; }
 
-  /* Viewfinder overlay */
-  .viewfinder {
-    position: absolute;
-    inset: 16px;
-    border: none;
-    pointer-events: none;
-    display: none;
-  }
-
-  .viewfinder::before, .viewfinder::after,
-  .vf-br::before, .vf-br::after {
-    content: '';
-    position: absolute;
+  .viewfinder::before, .viewfinder::after, .vf-br::before, .vf-br::after {
+    content: ''; position: absolute;
     width: 24px; height: 24px;
-    border-color: var(--accent);
-    border-style: solid;
-    opacity: 0.8;
+    border-color: var(--accent); border-style: solid; opacity: 0.8;
   }
 
-  .viewfinder::before { top: 0; left: 0; border-width: 2px 0 0 2px; border-radius: 4px 0 0 0; }
-  .viewfinder::after  { top: 0; right: 0; border-width: 2px 2px 0 0; border-radius: 0 4px 0 0; }
-  .vf-br::before { bottom: 0; left: 0; border-width: 0 0 2px 2px; border-radius: 0 0 0 4px; }
-  .vf-br::after  { bottom: 0; right: 0; border-width: 0 2px 2px 0; border-radius: 0 0 4px 0; }
+  .viewfinder::before { top:0;left:0;border-width:2px 0 0 2px;border-radius:4px 0 0 0; }
+  .viewfinder::after  { top:0;right:0;border-width:2px 2px 0 0;border-radius:0 4px 0 0; }
+  .vf-br::before { bottom:0;left:0;border-width:0 0 2px 2px;border-radius:0 0 0 4px; }
+  .vf-br::after  { bottom:0;right:0;border-width:0 2px 2px 0;border-radius:0 0 4px 0; }
 
   .scan-line {
-    position: absolute;
-    left: 0; right: 0;
-    height: 2px;
+    position: absolute; left:0; right:0; height:2px;
     background: linear-gradient(90deg, transparent, var(--accent), transparent);
     animation: scan 2s ease-in-out infinite;
-    display: none;
-    top: 0;
+    display: none; top:0;
   }
 
-  @keyframes scan {
-    0%   { top: 10%; opacity: 1; }
-    100% { top: 90%; opacity: 0.2; }
-  }
+  @keyframes scan { 0%{top:10%;opacity:1} 100%{top:90%;opacity:0.2} }
 
-  /* Buttons */
   .btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 14px 20px;
-    border-radius: 12px;
-    border: none;
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    width: 100%;
-    letter-spacing: 0.5px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 14px 20px; border-radius: 12px; border: none;
+    font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s; width: 100%; letter-spacing: 0.5px;
   }
 
-  .btn-primary {
-    background: linear-gradient(135deg, var(--accent2), var(--accent));
-    color: var(--bg);
-    font-weight: 700;
-  }
-
-  .btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(0,229,192,0.25);
-  }
-
+  .btn-primary { background: linear-gradient(135deg, var(--accent2), var(--accent)); color: var(--bg); font-weight: 700; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,229,192,0.25); }
   .btn-primary:active { transform: translateY(0); }
 
-  .btn-outline {
-    background: transparent;
-    border: 1.5px solid var(--border);
-    color: var(--text);
-  }
+  .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
 
-  .btn-outline:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-
-  .btn-danger {
-    background: rgba(255,107,107,0.1);
-    border: 1.5px solid rgba(255,107,107,0.3);
-    color: var(--warn);
-  }
-
-  .btn-danger:hover {
-    background: rgba(255,107,107,0.2);
-  }
+  .btn-danger { background: rgba(255,107,107,0.1); border: 1.5px solid rgba(255,107,107,0.3); color: var(--warn); }
+  .btn-danger:hover { background: rgba(255,107,107,0.2); }
 
   .btn-wa {
     background: linear-gradient(135deg, #25d366, #128c7e);
-    color: #fff;
-    font-weight: 700;
-    font-size: 15px;
-    padding: 16px;
+    color: #fff; font-weight: 700; font-size: 15px; padding: 16px;
   }
+  .btn-wa:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(37,211,102,0.35); }
 
-  .btn-wa:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 32px rgba(37,211,102,0.35);
-  }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
 
-  .btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    transform: none !important;
-    box-shadow: none !important;
-  }
-
-  .btn-row {
-    display: flex;
-    gap: 10px;
-    margin-top: 14px;
-  }
-
+  .btn-row { display: flex; gap: 10px; margin-top: 14px; }
   .btn-row .btn { flex: 1; }
 
-  /* Form fields */
-  .field {
-    margin-bottom: 16px;
-  }
+  .field { margin-bottom: 16px; }
 
   label {
-    display: block;
-    font-size: 11px;
-    color: var(--muted);
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    margin-bottom: 8px;
+    display: block; font-size: 11px; color: var(--muted);
+    letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px;
   }
 
-  .input-wrap {
-    position: relative;
-  }
+  .input-wrap { position: relative; }
 
   input[type="text"] {
-    width: 100%;
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 40px 12px 14px;
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%; background: var(--surface2);
+    border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 12px 40px 12px 14px; color: var(--text);
+    font-family: 'DM Mono', monospace; font-size: 14px;
+    outline: none; transition: border-color 0.2s, box-shadow 0.2s;
   }
 
-  input[type="text"]:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(0,229,192,0.1);
-  }
-
-  input[type="text"].readonly {
-    opacity: 0.7;
-    cursor: default;
-  }
+  input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,192,0.1); }
+  input[type="text"].readonly { opacity: 0.7; cursor: default; }
 
   .edit-btn {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--muted);
-    font-size: 16px;
-    padding: 4px;
-    transition: color 0.2s;
-    line-height: 1;
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; color: var(--muted);
+    font-size: 16px; padding: 4px; transition: color 0.2s; line-height: 1;
   }
-
   .edit-btn:hover { color: var(--accent); }
 
-  /* AI Processing */
   .ai-processing {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
-    padding: 24px;
-    text-align: center;
+    display: none; flex-direction: column;
+    align-items: center; gap: 14px; padding: 24px; text-align: center;
   }
 
   .ai-spinner {
-    width: 56px; height: 56px;
-    border-radius: 50%;
+    width: 56px; height: 56px; border-radius: 50%;
     border: 3px solid var(--border);
-    border-top-color: var(--accent);
-    border-right-color: var(--accent2);
+    border-top-color: var(--accent); border-right-color: var(--accent2);
     animation: spin 0.8s linear infinite;
   }
 
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  .ai-label {
-    font-size: 13px;
-    color: var(--muted);
-  }
+  .ai-label { font-size: 13px; color: var(--muted); }
+  .ai-status { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--accent); }
 
-  .ai-status {
-    font-family: 'Syne', sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--accent);
-  }
+  .photo-thumb { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 12px; border: 1px solid var(--border); }
+  .photo-thumb img { width: 100%; display: block; object-fit: cover; max-height: 200px; }
 
-  /* Photo preview */
-  .photo-thumb {
-    width: 100%;
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 12px;
-    border: 1px solid var(--border);
-  }
-
-  .photo-thumb img {
-    width: 100%;
-    display: block;
-    object-fit: cover;
-    max-height: 200px;
-  }
-
-  /* Tag badge */
   .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    background: rgba(0,229,192,0.1);
-    border: 1px solid rgba(0,229,192,0.25);
-    border-radius: 20px;
-    font-size: 11px;
-    color: var(--accent);
-    letter-spacing: 0.5px;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; background: rgba(0,229,192,0.1);
+    border: 1px solid rgba(0,229,192,0.25); border-radius: 20px;
+    font-size: 11px; color: var(--accent); letter-spacing: 0.5px;
   }
 
-  /* Toast */
   .toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
+    position: fixed; bottom: 24px; left: 50%;
     transform: translateX(-50%) translateY(80px);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px 20px;
-    font-size: 13px;
-    color: var(--text);
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 20px; font-size: 13px; color: var(--text);
     box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-    z-index: 100;
-    white-space: nowrap;
+    z-index: 100; white-space: nowrap;
   }
 
   .toast.show { transform: translateX(-50%) translateY(0); }
   .toast.error { border-color: var(--warn); color: var(--warn); }
   .toast.success { border-color: var(--success); color: var(--success); }
 
-  /* Hidden input */
   #file-input { display: none; }
-
-  /* Section visibility */
   .section { display: none; }
   .section.visible { display: block; }
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
 
-  /* Divider */
-  .divider {
-    height: 1px;
-    background: var(--border);
-    margin: 16px 0;
-  }
-
-  /* WhatsApp number input */
-  .wa-input-wrap {
-    display: flex;
-    gap: 10px;
-    align-items: stretch;
-  }
-
+  .wa-input-wrap { display: flex; gap: 10px; align-items: stretch; }
   .wa-prefix {
-    display: flex;
-    align-items: center;
-    padding: 0 14px;
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    font-size: 14px;
-    color: var(--muted);
-    white-space: nowrap;
+    display: flex; align-items: center; padding: 0 14px;
+    background: var(--surface2); border: 1.5px solid var(--border);
+    border-radius: 10px; font-size: 14px; color: var(--muted); white-space: nowrap;
   }
-
-  .wa-input-wrap input {
-    flex: 1;
-  }
+  .wa-input-wrap input { flex: 1; }
 </style>
 </head>
 <body>
@@ -534,22 +416,29 @@
     <p class="tagline">Lector inteligente de productos</p>
   </header>
 
+  <!-- API Key bar (always visible) -->
+  <div class="apikey-bar" id="apikey-bar">
+    <div class="apikey-header">
+      <span class="apikey-title">🔑 API Key de Anthropic</span>
+      <span class="apikey-status" id="key-status">Sin configurar</span>
+    </div>
+    <div class="apikey-input-wrap">
+      <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
+      <button class="btn-save-key" onclick="saveApiKey()">Guardar</button>
+    </div>
+    <div class="apikey-hint">
+      Obtén tu key gratis en <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a> → API Keys.<br>
+      Se guarda solo en este dispositivo (localStorage).
+    </div>
+  </div>
+
   <!-- Steps -->
   <div class="steps">
-    <div class="step active" id="s1">
-      <div class="step-num">1</div>
-      <div class="step-label">Foto</div>
-    </div>
+    <div class="step active" id="s1"><div class="step-num">1</div><div class="step-label">Foto</div></div>
     <div class="step-line" id="l1"></div>
-    <div class="step" id="s2">
-      <div class="step-num">2</div>
-      <div class="step-label">Datos</div>
-    </div>
+    <div class="step" id="s2"><div class="step-num">2</div><div class="step-label">Datos</div></div>
     <div class="step-line" id="l2"></div>
-    <div class="step" id="s3">
-      <div class="step-num">3</div>
-      <div class="step-label">Enviar</div>
-    </div>
+    <div class="step" id="s3"><div class="step-num">3</div><div class="step-label">Enviar</div></div>
   </div>
 
   <!-- SECTION 1: Camera -->
@@ -571,23 +460,17 @@
       <input type="file" id="file-input" accept="image/*" capture="environment">
 
       <div class="btn-row">
-        <button class="btn btn-primary" onclick="activateCamera()" id="btn-cam">
-          📷 Cámara
-        </button>
-        <button class="btn btn-outline" onclick="document.getElementById('file-input').click()">
-          🖼️ Galería
-        </button>
+        <button class="btn btn-primary" onclick="activateCamera()" id="btn-cam">📷 Cámara</button>
+        <button class="btn btn-outline" onclick="document.getElementById('file-input').click()">🖼️ Galería</button>
       </div>
 
       <div style="margin-top:12px">
-        <button class="btn btn-primary" id="btn-analyze" onclick="analyzePhoto()" disabled>
-          ✨ Analizar con IA
-        </button>
+        <button class="btn btn-primary" id="btn-analyze" onclick="analyzePhoto()" disabled>✨ Analizar con IA</button>
       </div>
     </div>
   </div>
 
-  <!-- SECTION 2: AI Processing -->
+  <!-- SECTION 2: Processing -->
   <div id="sec-processing" class="section">
     <div class="card">
       <div class="ai-processing" style="display:flex">
@@ -598,11 +481,10 @@
     </div>
   </div>
 
-  <!-- SECTION 3: Data review -->
+  <!-- SECTION 3: Data -->
   <div id="sec-data" class="section">
     <div class="card">
       <div class="card-title">📋 Datos detectados <span class="badge">✓ IA</span></div>
-
       <div class="photo-thumb" id="photo-thumb"></div>
 
       <div class="field">
@@ -622,7 +504,6 @@
       </div>
 
       <div class="divider"></div>
-
       <div class="btn-row">
         <button class="btn btn-danger" onclick="resetAll()">🔄 Nueva foto</button>
         <button class="btn btn-outline" onclick="showSendSection()">➡️ Siguiente</button>
@@ -630,11 +511,10 @@
     </div>
   </div>
 
-  <!-- SECTION 4: Send via WhatsApp -->
+  <!-- SECTION 4: Send -->
   <div id="sec-send" class="section">
     <div class="card">
       <div class="card-title">💬 Enviar por WhatsApp</div>
-
       <div class="photo-thumb" id="photo-thumb2"></div>
 
       <div style="background:var(--surface2);border-radius:12px;padding:14px;margin-bottom:16px;border:1px solid var(--border)">
@@ -664,7 +544,6 @@
       </div>
     </div>
   </div>
-
 </div>
 
 <div class="toast" id="toast"></div>
@@ -672,8 +551,41 @@
 <script>
 let capturedImage = null;
 let stream = null;
-let cameraMode = false;
 
+// Load saved API key
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('escanpro_apikey');
+  if (saved) {
+    document.getElementById('api-key-input').value = saved;
+    updateKeyStatus(true);
+  }
+});
+
+function saveApiKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (!val.startsWith('sk-ant-')) {
+    updateKeyStatus(false);
+    showToast('La key debe empezar con sk-ant-...', 'error');
+    return;
+  }
+  localStorage.setItem('escanpro_apikey', val);
+  updateKeyStatus(true);
+  showToast('✓ API Key guardada', 'success');
+}
+
+function updateKeyStatus(ok) {
+  const bar = document.getElementById('apikey-bar');
+  const status = document.getElementById('key-status');
+  bar.className = 'apikey-bar ' + (ok ? 'valid' : 'invalid');
+  status.className = 'apikey-status ' + (ok ? 'ok' : 'err');
+  status.textContent = ok ? '✓ Configurada' : '✗ Inválida';
+}
+
+function getApiKey() {
+  return localStorage.getItem('escanpro_apikey') || document.getElementById('api-key-input').value.trim();
+}
+
+// Camera
 const fileInput = document.getElementById('file-input');
 const video = document.getElementById('video');
 const canvasPreview = document.getElementById('canvas-preview');
@@ -683,7 +595,6 @@ const scanLine = document.getElementById('scan-line');
 const btnAnalyze = document.getElementById('btn-analyze');
 const btnCam = document.getElementById('btn-cam');
 
-// File input change
 fileInput.addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -702,8 +613,7 @@ function showImagePreview(src) {
   img.onload = () => {
     canvasPreview.width = img.width;
     canvasPreview.height = img.height;
-    const ctx = canvasPreview.getContext('2d');
-    ctx.drawImage(img, 0, 0);
+    canvasPreview.getContext('2d').drawImage(img, 0, 0);
     canvasPreview.style.display = 'block';
   };
   img.src = src;
@@ -711,7 +621,6 @@ function showImagePreview(src) {
   viewfinder.style.display = 'none';
   scanLine.style.display = 'none';
   btnAnalyze.disabled = false;
-  cameraMode = false;
 }
 
 async function activateCamera() {
@@ -726,11 +635,8 @@ async function activateCamera() {
     scanLine.style.display = 'block';
     btnCam.innerHTML = '📸 Capturar';
     btnCam.onclick = captureFromCamera;
-    cameraMode = true;
   } catch(e) {
-    showToast('No se pudo acceder a la cámara. Usa la opción Galería.', 'error');
-    document.getElementById('file-input').removeAttribute('capture');
-    document.getElementById('file-input').click();
+    showToast('No se pudo acceder a la cámara', 'error');
   }
 }
 
@@ -766,8 +672,7 @@ function setStep(n) {
     else if (i === n) s.classList.add('active');
   });
   [1,2].forEach(i => {
-    const l = document.getElementById('l'+i);
-    l.classList.toggle('done', i < n);
+    document.getElementById('l'+i).classList.toggle('done', i < n);
   });
 }
 
@@ -779,7 +684,14 @@ function showSection(id) {
 }
 
 async function analyzePhoto() {
+  const apiKey = getApiKey();
+  if (!apiKey || !apiKey.startsWith('sk-ant-')) {
+    showToast('Primero ingresa tu API Key arriba', 'error');
+    document.getElementById('api-key-input').focus();
+    return;
+  }
   if (!capturedImage) return;
+
   stopCamera();
   setStep(2);
   showSection('sec-processing');
@@ -799,32 +711,43 @@ async function analyzePhoto() {
 
   try {
     const base64 = capturedImage.split(',')[1];
+    const mediaType = capturedImage.split(';')[0].split(':')[1] || 'image/jpeg';
+
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 300,
         messages: [{
           role: 'user',
           content: [
-            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
-            { type: 'text', text: 'Eres un lector de productos. Analiza esta imagen y extrae SOLO: 1) El nombre del producto (marca y nombre), 2) La presentación (tamaño, cantidad, volumen, peso, variante o sabor). Responde ÚNICAMENTE en formato JSON puro sin markdown, sin backticks: {"nombre":"...","presentacion":"..."}. Si no puedes identificar algún campo, usa "No identificado".' }
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+            { type: 'text', text: 'Eres un lector de productos. Analiza esta imagen y extrae SOLO: 1) El nombre del producto (marca y nombre), 2) La presentación (tamaño, cantidad, volumen, peso, variante o sabor). Responde ÚNICAMENTE en formato JSON puro sin markdown ni backticks: {"nombre":"...","presentacion":"..."}. Si no puedes identificar algún campo, usa "No identificado".' }
           ]
         }]
       })
     });
 
     clearInterval(interval);
+
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.error?.message || 'Error de API');
+    }
+
     const data = await resp.json();
     const text = data.content?.find(b => b.type === 'text')?.text || '{}';
     let parsed = { nombre: 'No identificado', presentacion: 'No identificado' };
 
     try {
-      const clean = text.replace(/```json|```/g, '').trim();
-      parsed = JSON.parse(clean);
+      parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
     } catch(e) {
-      // fallback regex
       const nm = text.match(/"nombre"\s*:\s*"([^"]+)"/);
       const pr = text.match(/"presentacion"\s*:\s*"([^"]+)"/);
       if (nm) parsed.nombre = nm[1];
@@ -834,7 +757,6 @@ async function analyzePhoto() {
     document.getElementById('field-nombre').value = parsed.nombre || 'No identificado';
     document.getElementById('field-presentacion').value = parsed.presentacion || 'No identificado';
 
-    // thumbnail
     const thumbHtml = `<img src="${capturedImage}" alt="producto">`;
     document.getElementById('photo-thumb').innerHTML = thumbHtml;
     document.getElementById('photo-thumb2').innerHTML = thumbHtml;
@@ -845,14 +767,9 @@ async function analyzePhoto() {
 
   } catch(e) {
     clearInterval(interval);
-    document.getElementById('field-nombre').value = 'Error al analizar';
-    document.getElementById('field-presentacion').value = 'Edita manualmente';
-    const thumbHtml = `<img src="${capturedImage}" alt="producto">`;
-    document.getElementById('photo-thumb').innerHTML = thumbHtml;
-    document.getElementById('photo-thumb2').innerHTML = thumbHtml;
-    setStep(2);
-    showSection('sec-data');
-    showToast('Error de análisis — puedes editar manualmente', 'error');
+    showSection('sec-camera');
+    setStep(1);
+    showToast('Error: ' + (e.message || 'Revisa tu API Key'), 'error');
   }
 }
 
@@ -872,10 +789,8 @@ function toggleEdit(fieldId, btn) {
 }
 
 function showSendSection() {
-  const nombre = document.getElementById('field-nombre').value;
-  const pres = document.getElementById('field-presentacion').value;
-  document.getElementById('summary-nombre').textContent = nombre;
-  document.getElementById('summary-presentacion').textContent = pres;
+  document.getElementById('summary-nombre').textContent = document.getElementById('field-nombre').value;
+  document.getElementById('summary-presentacion').textContent = document.getElementById('field-presentacion').value;
   setStep(3);
   showSection('sec-send');
 }
@@ -888,14 +803,13 @@ function goBackToData() {
 function sendWhatsApp() {
   const nombre = document.getElementById('field-nombre').value;
   const pres = document.getElementById('field-presentacion').value;
-  const waRaw = document.getElementById('wa-number').value.replace(/\D/g,'');
+  const waRaw = document.getElementById('wa-number').value.replace(/\D/,'');
 
   if (!waRaw || waRaw.length < 10) {
     showToast('Ingresa un número válido de 10 dígitos', 'error');
     return;
   }
 
-  const numero = '52' + waRaw;
   const msg = encodeURIComponent(
     `📦 *Producto Escaneado*\n\n` +
     `🏷️ *Nombre:* ${nombre}\n` +
@@ -903,8 +817,7 @@ function sendWhatsApp() {
     `_Enviado desde EscanPro_`
   );
 
-  const url = `https://wa.me/${numero}?text=${msg}`;
-  window.open(url, '_blank');
+  window.open(`https://wa.me/52${waRaw}?text=${msg}`, '_blank');
   showToast('¡Abriendo WhatsApp! 🟢', 'success');
 }
 
