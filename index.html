@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EscanPro — Lector de Productos</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<title>EscanPro</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #0a0a0f;
@@ -26,202 +26,517 @@
     color: var(--text);
     font-family: 'DM Mono', monospace;
     min-height: 100vh;
-    overflow-x: hidden;
+    overflow: hidden;
   }
 
-  body::before {
-    content: '';
+  /* ── LENS VIEW (pantalla principal) ── */
+  #lens-view {
     position: fixed;
     inset: 0;
-    background:
-      radial-gradient(ellipse 60% 50% at 20% 20%, rgba(124,92,252,0.12) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 40% at 80% 80%, rgba(0,229,192,0.08) 0%, transparent 60%);
-    pointer-events: none;
-    z-index: 0;
+    background: #000;
+    display: flex;
+    flex-direction: column;
   }
 
-  .app {
+  #camera-feed {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Overlay oscuro arriba y abajo */
+  .lens-overlay-top {
     position: relative;
-    z-index: 1;
-    max-width: 520px;
-    margin: 0 auto;
-    padding: 24px 16px 80px;
+    z-index: 2;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+    padding: 52px 20px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
 
-  header { text-align: center; padding: 32px 0 28px; }
-  .logo { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-  .logo-icon {
-    width: 36px; height: 36px;
-    background: linear-gradient(135deg, var(--accent2), var(--accent));
-    border-radius: 10px;
+  .lens-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .lens-version {
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 1px;
+    opacity: 0.8;
+  }
+
+  .btn-settings {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    border-radius: 50%;
+    width: 40px; height: 40px;
     display: flex; align-items: center; justify-content: center;
     font-size: 18px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
   }
-  h1 {
-    font-family: 'Syne', sans-serif;
-    font-size: 28px; font-weight: 800; letter-spacing: -0.5px;
-    background: linear-gradient(135deg, var(--text) 30%, var(--accent));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  }
-  .tagline { color: var(--muted); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
 
-  .steps { display: flex; align-items: center; justify-content: center; margin-bottom: 28px; }
-  .step { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .step-num {
-    width: 32px; height: 32px; border-radius: 50%;
-    border: 2px solid var(--border);
+  /* Visor central */
+  .lens-frame {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .lens-corners {
+    width: 240px;
+    height: 240px;
+    position: relative;
+  }
+
+  .lens-corners::before, .lens-corners::after,
+  .lc-br::before, .lc-br::after {
+    content: '';
+    position: absolute;
+    width: 32px; height: 32px;
+    border-color: rgba(255,255,255,0.8);
+    border-style: solid;
+  }
+  .lens-corners::before { top:0;left:0;border-width:3px 0 0 3px;border-radius:6px 0 0 0; }
+  .lens-corners::after  { top:0;right:0;border-width:3px 3px 0 0;border-radius:0 6px 0 0; }
+  .lc-br::before { bottom:0;left:0;border-width:0 0 3px 3px;border-radius:0 0 0 6px; }
+  .lc-br::after  { bottom:0;right:0;border-width:0 3px 3px 0;border-radius:0 0 6px 0; }
+
+  .lens-scan-line {
+    position: absolute;
+    left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    animation: lenscan 2s ease-in-out infinite;
+    top: 0;
+  }
+  @keyframes lenscan { 0%{top:5%;opacity:1} 100%{top:95%;opacity:0.2} }
+
+  /* Bottom bar */
+  .lens-bottom {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    z-index: 2;
+    background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+    padding: 20px 24px 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .lens-hint {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+
+  .lens-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    width: 100%;
+  }
+
+  .btn-gallery {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    border-radius: 16px;
+    width: 56px; height: 56px;
     display: flex; align-items: center; justify-content: center;
-    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
-    color: var(--muted); transition: all 0.3s;
+    font-size: 24px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: background 0.2s;
   }
-  .step.active .step-num { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 16px rgba(0,229,192,0.3); }
-  .step.done .step-num { background: var(--accent); border-color: var(--accent); color: var(--bg); }
-  .step-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
-  .step.active .step-label { color: var(--accent); }
-  .step.done .step-label { color: var(--success); }
-  .step-line { width: 40px; height: 2px; background: var(--border); margin-bottom: 18px; transition: background 0.3s; }
-  .step-line.done { background: var(--accent); }
+  .btn-gallery:hover { background: rgba(255,255,255,0.25); }
 
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 20px; padding: 24px; margin-bottom: 16px;
-    position: relative; overflow: hidden;
-  }
-  .card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, var(--accent2), var(--accent)); opacity: 0.6;
-  }
-  .card-title {
-    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
-    color: var(--muted); letter-spacing: 2px; text-transform: uppercase;
-    margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+  .btn-capture {
+    width: 76px; height: 76px;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    background: rgba(255,255,255,0.2);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    backdrop-filter: blur(8px);
+    position: relative;
   }
 
-  .apikey-bar {
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 14px; padding: 16px; margin-bottom: 20px;
+  .btn-capture::after {
+    content: '';
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: #fff;
+    transition: all 0.15s;
   }
-  .apikey-bar.valid { border-color: rgba(0,229,192,0.4); }
-  .apikey-bar.invalid { border-color: rgba(255,107,107,0.4); }
-  .apikey-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-  .apikey-title { font-size: 11px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
-  .apikey-status { font-size: 11px; padding: 3px 8px; border-radius: 20px; background: rgba(107,107,138,0.15); color: var(--muted); }
-  .apikey-status.ok { background: rgba(0,229,192,0.1); color: var(--accent); }
-  .apikey-status.err { background: rgba(255,107,107,0.1); color: var(--warn); }
-  .apikey-input-wrap { display: flex; gap: 8px; }
+
+  .btn-capture:active::after { width: 48px; height: 48px; }
+
+  .btn-spacer { width: 56px; }
+
+  /* Analizando overlay */
+  #analyzing-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,15,0.92);
+    z-index: 50;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+  }
+
+  #analyzing-overlay.show { display: flex; }
+
+  .analyzing-photo {
+    width: 140px; height: 140px;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 2px solid var(--border);
+    position: relative;
+  }
+
+  .analyzing-photo img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+
+  .analyzing-pulse {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0,229,192,0.2), rgba(124,92,252,0.2));
+    animation: pulse 1s ease-in-out infinite alternate;
+  }
+
+  @keyframes pulse { from{opacity:0.3} to{opacity:0.8} }
+
+  .analyzing-spinner {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-right-color: var(--accent2);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to{transform:rotate(360deg)} }
+
+  .analyzing-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .analyzing-sub { font-size: 12px; color: var(--muted); }
+
+  /* ── RESULT VIEW ── */
+  #result-view {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 40;
+    display: none;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  #result-view.show { display: flex; }
+
+  .result-photo-wrap {
+    position: relative;
+    width: 100%;
+    height: 280px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .result-photo-wrap img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+
+  .result-photo-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 50%, var(--bg) 100%);
+  }
+
+  .result-photo-actions {
+    position: absolute;
+    top: 48px; right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .btn-icon {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  .btn-icon:hover { background: rgba(0,0,0,0.8); }
+
+  .result-content {
+    flex: 1;
+    padding: 0 20px 40px;
+    margin-top: -20px;
+    position: relative;
+  }
+
+  .result-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: rgba(0,229,192,0.1);
+    border: 1px solid rgba(0,229,192,0.3);
+    border-radius: 20px;
+    font-size: 11px;
+    color: var(--accent);
+    margin-bottom: 16px;
+    letter-spacing: 1px;
+  }
+
+  .result-field-label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .result-field-wrap {
+    position: relative;
+    margin-bottom: 20px;
+  }
+
+  .result-field {
+    width: 100%;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 48px 14px 16px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    line-height: 1.5;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: none;
+    min-height: 60px;
+  }
+
+  .result-field:focus { border-color: var(--accent); }
+  .result-field.readonly { opacity: 0.85; cursor: default; }
+
+  .edit-btn {
+    position: absolute;
+    right: 12px; top: 14px;
+    background: none; border: none;
+    cursor: pointer; color: var(--muted);
+    font-size: 16px; transition: color 0.2s;
+  }
+  .edit-btn:hover { color: var(--accent); }
+
+  /* Precio fields */
+  .price-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .price-field-wrap {
+    flex: 1;
+    position: relative;
+  }
+
+  .price-prefix {
+    position: absolute;
+    left: 14px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .price-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 14px 14px 28px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .price-input:focus { border-color: var(--accent); }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0 20px;
+  }
+
+  /* Buttons */
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 15px 20px; border-radius: 14px; border: none;
+    font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; width: 100%; letter-spacing: 0.5px;
+  }
+
+  .btn-primary { background: linear-gradient(135deg, var(--accent2), var(--accent)); color: var(--bg); }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,229,192,0.25); }
+  .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-wa { background: linear-gradient(135deg, #25d366, #128c7e); color: #fff; font-size: 15px; }
+  .btn-wa:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(37,211,102,0.3); }
+  .btn-row { display: flex; gap: 10px; }
+  .btn-row .btn { flex: 1; }
+
+  /* Share photo panel */
+  #share-photo-panel {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 60;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    backdrop-filter: blur(4px);
+  }
+
+  #share-photo-panel.show { display: flex; }
+
+  .share-panel-inner {
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    padding: 24px 24px 48px;
+    width: 100%;
+    max-width: 520px;
+  }
+
+  .share-panel-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .share-photo-preview {
+    width: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+    max-height: 200px;
+  }
+
+  .share-photo-preview img {
+    width: 100%; display: block; object-fit: cover; max-height: 200px;
+  }
+
+  .share-steps {
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 2;
+  }
+
+  .share-steps span { color: var(--accent); }
+
+  /* Settings panel */
+  #settings-panel {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 60;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    backdrop-filter: blur(4px);
+  }
+
+  #settings-panel.show { display: flex; }
+
+  .settings-inner {
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    padding: 24px 24px 48px;
+    width: 100%;
+    max-width: 520px;
+  }
+
+  .settings-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .apikey-input-wrap { display: flex; gap: 8px; margin-bottom: 8px; }
   .apikey-input-wrap input {
-    flex: 1; background: var(--bg); border: 1.5px solid var(--border);
-    border-radius: 10px; padding: 10px 14px; color: var(--text);
-    font-family: 'DM Mono', monospace; font-size: 12px;
-    outline: none; transition: border-color 0.2s; letter-spacing: 1px;
+    flex: 1; background: var(--surface2); border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; color: var(--text);
+    font-family: 'DM Mono', monospace; font-size: 12px; outline: none;
+    transition: border-color 0.2s;
   }
   .apikey-input-wrap input:focus { border-color: var(--accent); }
+
   .btn-save-key {
-    padding: 10px 16px;
+    padding: 12px 16px;
     background: linear-gradient(135deg, var(--accent2), var(--accent));
     border: none; border-radius: 10px; color: var(--bg);
     font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 700;
     cursor: pointer; white-space: nowrap;
   }
-  .btn-save-key:hover { opacity: 0.85; }
-  .apikey-hint { font-size: 10px; color: var(--muted); margin-top: 8px; line-height: 1.6; }
+
+  .key-status {
+    font-size: 11px; padding: 3px 10px; border-radius: 20px;
+    background: rgba(107,107,138,0.15); color: var(--muted);
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .key-status.ok { background: rgba(0,229,192,0.1); color: var(--accent); }
+
+  .apikey-hint { font-size: 10px; color: var(--muted); line-height: 1.6; margin-top: 6px; }
   .apikey-hint a { color: #4285f4; text-decoration: none; }
 
-  .free-badge {
-    display: inline-flex; align-items: center;
-    padding: 2px 8px; border-radius: 20px;
-    background: rgba(52,168,83,0.15); border: 1px solid rgba(52,168,83,0.3);
-    font-size: 10px; color: #34a853; margin-left: 6px;
-  }
-
-  .camera-zone {
-    position: relative; width: 100%; aspect-ratio: 4/3;
-    background: var(--surface2); border: 2px dashed var(--border);
-    border-radius: 16px; overflow: hidden; cursor: pointer; transition: border-color 0.3s;
-  }
-  .camera-zone:hover { border-color: var(--accent); }
-  #video, #canvas-preview { width: 100%; height: 100%; object-fit: cover; display: none; }
-  .camera-placeholder {
-    position: absolute; inset: 0;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 12px; color: var(--muted);
-  }
-  .cam-icon { font-size: 48px; opacity: 0.4; }
-  .cam-text { font-size: 13px; text-align: center; line-height: 1.6; }
-  .viewfinder { position: absolute; inset: 16px; border: none; pointer-events: none; display: none; }
-  .viewfinder::before, .viewfinder::after, .vf-br::before, .vf-br::after {
-    content: ''; position: absolute; width: 24px; height: 24px;
-    border-color: var(--accent); border-style: solid; opacity: 0.8;
-  }
-  .viewfinder::before { top:0;left:0;border-width:2px 0 0 2px;border-radius:4px 0 0 0; }
-  .viewfinder::after  { top:0;right:0;border-width:2px 2px 0 0;border-radius:0 4px 0 0; }
-  .vf-br::before { bottom:0;left:0;border-width:0 0 2px 2px;border-radius:0 0 0 4px; }
-  .vf-br::after  { bottom:0;right:0;border-width:0 2px 2px 0;border-radius:0 0 4px 0; }
-  .scan-line {
-    position: absolute; left:0; right:0; height:2px; top:0;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    animation: scan 2s ease-in-out infinite; display: none;
-  }
-  @keyframes scan { 0%{top:10%;opacity:1} 100%{top:90%;opacity:0.2} }
-
-  .btn {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 14px 20px; border-radius: 12px; border: none;
-    font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500;
-    cursor: pointer; transition: all 0.2s; width: 100%; letter-spacing: 0.5px;
-  }
-  .btn-primary { background: linear-gradient(135deg, var(--accent2), var(--accent)); color: var(--bg); font-weight: 700; }
-  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,229,192,0.25); }
-  .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
-  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
-  .btn-danger { background: rgba(255,107,107,0.1); border: 1.5px solid rgba(255,107,107,0.3); color: var(--warn); }
-  .btn-danger:hover { background: rgba(255,107,107,0.2); }
-  .btn-wa { background: linear-gradient(135deg, #25d366, #128c7e); color: #fff; font-weight: 700; font-size: 15px; padding: 16px; }
-  .btn-wa:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(37,211,102,0.35); }
-  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
-  .btn-row { display: flex; gap: 10px; margin-top: 14px; }
-  .btn-row .btn { flex: 1; }
-
-  .field { margin-bottom: 16px; }
-  label { display: block; font-size: 11px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
-  .input-wrap { position: relative; }
-  input[type="text"] {
-    width: 100%; background: var(--surface2); border: 1.5px solid var(--border);
-    border-radius: 10px; padding: 12px 40px 12px 14px; color: var(--text);
-    font-family: 'DM Mono', monospace; font-size: 14px;
-    outline: none; transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,192,0.1); }
-  input[type="text"].readonly { opacity: 0.7; cursor: default; }
-  .edit-btn {
-    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-    background: none; border: none; cursor: pointer; color: var(--muted);
-    font-size: 16px; padding: 4px; transition: color 0.2s; line-height: 1;
-  }
-  .edit-btn:hover { color: var(--accent); }
-
-  .ai-processing { display: none; flex-direction: column; align-items: center; gap: 14px; padding: 24px; text-align: center; }
-  .ai-spinner {
-    width: 56px; height: 56px; border-radius: 50%;
-    border: 3px solid var(--border); border-top-color: var(--accent); border-right-color: var(--accent2);
-    animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .ai-label { font-size: 13px; color: var(--muted); }
-  .ai-status { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--accent); }
-
-  .photo-thumb { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 12px; border: 1px solid var(--border); }
-  .photo-thumb img { width: 100%; display: block; object-fit: cover; max-height: 200px; }
-
-  .badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 4px 10px; background: rgba(66,133,244,0.1);
-    border: 1px solid rgba(66,133,244,0.25); border-radius: 20px;
-    font-size: 11px; color: #4285f4;
-  }
-
+  /* Toast */
   .toast {
-    position: fixed; bottom: 24px; left: 50%;
+    position: fixed; bottom: 32px; left: 50%;
     transform: translateX(-50%) translateY(80px);
     background: var(--surface2); border: 1px solid var(--border);
     border-radius: 12px; padding: 12px 20px; font-size: 13px; color: var(--text);
@@ -234,269 +549,358 @@
   .toast.success { border-color: var(--success); color: var(--success); }
 
   #file-input { display: none; }
-  .section { display: none; }
-  .section.visible { display: block; }
-  .divider { height: 1px; background: var(--border); margin: 16px 0; }
-  .wa-input-wrap { display: flex; gap: 10px; align-items: stretch; }
-  .wa-prefix {
-    display: flex; align-items: center; padding: 0 14px;
-    background: var(--surface2); border: 1.5px solid var(--border);
-    border-radius: 10px; font-size: 14px; color: var(--muted); white-space: nowrap;
-  }
-  .wa-input-wrap input { flex: 1; }
 </style>
 </head>
 <body>
 
-<div class="app">
-  <header>
-    <div class="logo">
-      <div class="logo-icon">📦</div>
-      <h1>EscanPro</h1>
-    </div>
-    <p class="tagline">Lector inteligente de productos</p>
-    <p style="color:var(--accent);font-size:11px;letter-spacing:2px;margin-top:6px;opacity:0.7">v1.9 — gemini-2.5-flash-lite</p>
-  </header>
+<!-- ── LENS VIEW ── -->
+<div id="lens-view">
+  <video id="camera-feed" autoplay playsinline muted></video>
 
-  <!-- API Key -->
-  <div class="apikey-bar" id="apikey-bar">
-    <div class="apikey-header">
-      <span class="apikey-title">✦ Gemini API Key <span class="free-badge">GRATIS</span></span>
-      <span class="apikey-status" id="key-status">Sin configurar</span>
+  <div class="lens-overlay-top">
+    <div>
+      <div class="lens-title">📦 EscanPro</div>
+      <div class="lens-version">v2.0 — gemini-2.5-flash-lite</div>
+    </div>
+    <button class="btn-settings" onclick="openSettings()">⚙️</button>
+  </div>
+
+  <div class="lens-frame">
+    <div class="lens-corners">
+      <div class="lc-br"></div>
+      <div class="lens-scan-line"></div>
+    </div>
+  </div>
+
+  <div class="lens-bottom">
+    <div class="lens-hint">Apunta al producto y toca el botón</div>
+    <div class="lens-actions">
+      <button class="btn-gallery" onclick="document.getElementById('file-input').click()" title="Galería">🖼️</button>
+      <button class="btn-capture" id="btn-capture" onclick="captureAndAnalyze()"></button>
+      <div class="btn-spacer"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ANALYZING OVERLAY ── -->
+<div id="analyzing-overlay">
+  <div class="analyzing-photo">
+    <img id="analyzing-thumb" src="" alt="">
+    <div class="analyzing-pulse"></div>
+  </div>
+  <div class="analyzing-spinner"></div>
+  <div class="analyzing-text" id="analyzing-text">Analizando producto...</div>
+  <div class="analyzing-sub" id="analyzing-sub">Gemini está leyendo la etiqueta</div>
+</div>
+
+<!-- ── RESULT VIEW ── -->
+<div id="result-view">
+  <div class="result-photo-wrap">
+    <img id="result-photo" src="" alt="producto">
+    <div class="result-photo-overlay"></div>
+    <div class="result-photo-actions">
+      <button class="btn-icon" onclick="closeResult()" title="Volver">✕</button>
+    </div>
+  </div>
+
+  <div class="result-content">
+    <div class="result-tag">✦ Gemini Flash Lite</div>
+
+    <div class="result-field-label">Producto</div>
+    <div class="result-field-wrap">
+      <textarea id="field-producto" class="result-field readonly" readonly rows="2"></textarea>
+      <button class="edit-btn" onclick="toggleEdit('field-producto', this)">✏️</button>
+    </div>
+
+    <div class="price-row">
+      <div class="price-field-wrap">
+        <div class="result-field-label">Precio estante</div>
+        <div style="position:relative">
+          <span class="price-prefix">$</span>
+          <input type="number" class="price-input" id="precio-estante" placeholder="0.00" step="0.01">
+        </div>
+      </div>
+      <div class="price-field-wrap">
+        <div class="result-field-label">Precio venta</div>
+        <div style="position:relative">
+          <span class="price-prefix">$</span>
+          <input type="number" class="price-input" id="precio-venta" placeholder="0.00" step="0.01">
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <button class="btn btn-wa" onclick="sendWhatsApp()" style="margin-bottom:12px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Enviar por WhatsApp
+    </button>
+
+    <button class="btn btn-outline" onclick="openSharePhoto()">
+      📷 Compartir foto del producto
+    </button>
+  </div>
+</div>
+
+<!-- ── SHARE PHOTO PANEL ── -->
+<div id="share-photo-panel" onclick="closeSharePhoto()">
+  <div class="share-panel-inner" onclick="event.stopPropagation()">
+    <div class="share-panel-title">📷 Compartir foto</div>
+    <div class="share-photo-preview">
+      <img id="share-photo-img" src="" alt="producto">
+    </div>
+    <div class="share-steps">
+      <span>1.</span> Mantén presionada la foto de arriba<br>
+      <span>2.</span> Selecciona "Compartir imagen"<br>
+      <span>3.</span> Elige WhatsApp y el contacto
+    </div>
+    <button class="btn btn-outline" onclick="closeSharePhoto()">Cerrar</button>
+  </div>
+</div>
+
+<!-- ── SETTINGS PANEL ── -->
+<div id="settings-panel" onclick="closeSettings()">
+  <div class="settings-inner" onclick="event.stopPropagation()">
+    <div class="settings-title">⚙️ Configuración</div>
+
+    <div style="font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+      Gemini API Key
+      <span class="key-status" id="key-status">Sin configurar</span>
     </div>
     <div class="apikey-input-wrap">
       <input type="password" id="api-key-input" placeholder="AIzaSy..." autocomplete="off" spellcheck="false">
       <button class="btn-save-key" onclick="saveApiKey()">Guardar</button>
     </div>
     <div class="apikey-hint">
-      Consigue tu key gratis (sin tarjeta) en <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a> → Get API Key
+      Key gratis en <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a> → Get API Key. Sin tarjeta. 🎉
     </div>
-  </div>
 
-  <!-- Steps -->
-  <div class="steps">
-    <div class="step active" id="s1"><div class="step-num">1</div><div class="step-label">Foto</div></div>
-    <div class="step-line" id="l1"></div>
-    <div class="step" id="s2"><div class="step-num">2</div><div class="step-label">Datos</div></div>
-    <div class="step-line" id="l2"></div>
-    <div class="step" id="s3"><div class="step-num">3</div><div class="step-label">Enviar</div></div>
-  </div>
-
-  <!-- SECTION 1: Camera -->
-  <div id="sec-camera" class="section visible">
-    <div class="card">
-      <div class="card-title">📷 Captura el producto</div>
-      <div class="camera-zone" onclick="document.getElementById('file-input').click()">
-        <video id="video" autoplay playsinline></video>
-        <canvas id="canvas-preview" style="display:none"></canvas>
-        <div class="camera-placeholder" id="placeholder">
-          <div class="cam-icon">📱</div>
-          <div class="cam-text">Toca para tomar foto<br><span style="font-size:11px;color:var(--muted)">o elige de galería</span></div>
-        </div>
-        <div class="viewfinder" id="viewfinder"><div class="vf-br"></div></div>
-        <div class="scan-line" id="scan-line"></div>
-      </div>
-      <input type="file" id="file-input" accept="image/*" capture="environment">
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="activateCamera()" id="btn-cam">📷 Cámara</button>
-        <button class="btn btn-outline" onclick="document.getElementById('file-input').click()">🖼️ Galería</button>
-      </div>
-      <div style="margin-top:12px">
-        <button class="btn btn-primary" id="btn-analyze" onclick="analyzePhoto()" disabled>✨ Analizar con IA</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- SECTION 2: Processing -->
-  <div id="sec-processing" class="section">
-    <div class="card">
-      <div class="ai-processing" style="display:flex">
-        <div class="ai-spinner"></div>
-        <div class="ai-status" id="ai-status-text">Analizando imagen...</div>
-        <div class="ai-label" id="ai-sub">Gemini está leyendo los datos del producto</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SECTION 3: Data -->
-  <div id="sec-data" class="section">
-    <div class="card">
-      <div class="card-title">📋 Datos detectados <span class="badge">✦ Gemini Flash</span></div>
-      <div class="photo-thumb" id="photo-thumb"></div>
-      <div class="field">
-        <label>Nombre del Producto</label>
-        <div class="input-wrap">
-          <input type="text" id="field-nombre" class="readonly" readonly placeholder="—">
-          <button class="edit-btn" onclick="toggleEdit('field-nombre', this)">✏️</button>
-        </div>
-      </div>
-      <div class="field">
-        <label>Presentación / Descripción</label>
-        <div class="input-wrap">
-          <input type="text" id="field-presentacion" class="readonly" readonly placeholder="—">
-          <button class="edit-btn" onclick="toggleEdit('field-presentacion', this)">✏️</button>
-        </div>
-      </div>
-      <div class="divider"></div>
-      <div class="btn-row">
-        <button class="btn btn-danger" onclick="resetAll()">🔄 Nueva foto</button>
-        <button class="btn btn-outline" onclick="showSendSection()">➡️ Siguiente</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- SECTION 4: Send -->
-  <div id="sec-send" class="section">
-    <div class="card">
-      <div class="card-title">💬 Enviar por WhatsApp</div>
-      <div class="photo-thumb" id="photo-thumb2"></div>
-      <div style="background:var(--surface2);border-radius:12px;padding:14px;margin-bottom:16px;border:1px solid var(--border)">
-        <div style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Resumen</div>
-        <div style="font-size:13px;line-height:1.8">
-          📦 <strong id="summary-nombre">—</strong><br>
-          📋 <span id="summary-presentacion" style="color:var(--muted)">—</span>
-        </div>
-      </div>
-      <div style="background:var(--surface2);border-radius:12px;padding:14px;margin-bottom:16px;border:1px solid rgba(37,211,102,0.2);font-size:12px;color:var(--muted);line-height:1.6">
-        💬 Se abrirá WhatsApp para que elijas el contacto directamente desde tu agenda.
-      </div>
-      <button class="btn btn-wa" onclick="sendWhatsApp()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-        Enviar por WhatsApp
-      </button>
-      <div style="margin-top:12px">
-        <button class="btn btn-outline" onclick="goBackToData()">← Editar datos</button>
-      </div>
+    <div style="margin-top:20px">
+      <button class="btn btn-outline" onclick="closeSettings()">Cerrar</button>
     </div>
   </div>
 </div>
 
+<input type="file" id="file-input" accept="image/*">
 <div class="toast" id="toast"></div>
 
 <script>
 let capturedImage = null;
-let stream = null;
+let cameraStream = null;
 
+// ── INIT ──
 window.addEventListener('load', () => {
   const saved = localStorage.getItem('escanpro_gemini_key');
   if (saved) {
     document.getElementById('api-key-input').value = saved;
     updateKeyStatus(true);
   }
+  startCamera();
 });
 
-function saveApiKey() {
-  const val = document.getElementById('api-key-input').value.trim();
-  if (!val.startsWith('AIza') || val.length < 20) {
-    updateKeyStatus(false);
-    showToast('La key debe empezar con AIza...', 'error');
-    return;
-  }
-  localStorage.setItem('escanpro_gemini_key', val);
-  updateKeyStatus(true);
-  showToast('✓ API Key guardada', 'success');
-}
-
-function updateKeyStatus(ok) {
-  document.getElementById('apikey-bar').className = 'apikey-bar ' + (ok ? 'valid' : 'invalid');
-  const s = document.getElementById('key-status');
-  s.className = 'apikey-status ' + (ok ? 'ok' : 'err');
-  s.textContent = ok ? '✓ Configurada' : '✗ Inválida';
-}
-
-function getApiKey() {
-  return localStorage.getItem('escanpro_gemini_key') || document.getElementById('api-key-input').value.trim();
-}
-
-const fileInput = document.getElementById('file-input');
-const video = document.getElementById('video');
-const canvasPreview = document.getElementById('canvas-preview');
-const placeholder = document.getElementById('placeholder');
-const viewfinder = document.getElementById('viewfinder');
-const scanLine = document.getElementById('scan-line');
-const btnAnalyze = document.getElementById('btn-analyze');
-const btnCam = document.getElementById('btn-cam');
-
-fileInput.addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  stopCamera();
-  const reader = new FileReader();
-  reader.onload = (ev) => { capturedImage = ev.target.result; showImagePreview(capturedImage); };
-  reader.readAsDataURL(file);
-});
-
-function showImagePreview(src) {
-  const img = new Image();
-  img.onload = () => {
-    canvasPreview.width = img.width;
-    canvasPreview.height = img.height;
-    canvasPreview.getContext('2d').drawImage(img, 0, 0);
-    canvasPreview.style.display = 'block';
-  };
-  img.src = src;
-  placeholder.style.display = 'none';
-  viewfinder.style.display = 'none';
-  scanLine.style.display = 'none';
-  btnAnalyze.disabled = false;
-}
-
-async function activateCamera() {
+// ── CAMERA ──
+async function startCamera() {
   try {
-    if (stream) { stopCamera(); return; }
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
-    video.srcObject = stream;
-    video.style.display = 'block';
-    canvasPreview.style.display = 'none';
-    placeholder.style.display = 'none';
-    viewfinder.style.display = 'block';
-    scanLine.style.display = 'block';
-    btnCam.innerHTML = '📸 Capturar';
-    btnCam.onclick = captureFromCamera;
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false
+    });
+    document.getElementById('camera-feed').srcObject = cameraStream;
   } catch(e) {
     showToast('No se pudo acceder a la cámara', 'error');
   }
 }
 
-function captureFromCamera() {
-  if (!stream) return;
-  const c = document.createElement('canvas');
-  c.width = video.videoWidth; c.height = video.videoHeight;
-  c.getContext('2d').drawImage(video, 0, 0);
-  capturedImage = c.toDataURL('image/jpeg', 0.9);
-  stopCamera();
-  showImagePreview(capturedImage);
-  btnCam.innerHTML = '📷 Cámara';
-  btnCam.onclick = activateCamera;
-  showToast('¡Foto capturada! ✓', 'success');
-}
-
 function stopCamera() {
-  if (stream) {
-    stream.getTracks().forEach(t => t.stop());
-    stream = null;
-    video.style.display = 'none';
-    viewfinder.style.display = 'none';
-    scanLine.style.display = 'none';
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
   }
 }
 
-function setStep(n) {
-  [1,2,3].forEach(i => {
-    const s = document.getElementById('s'+i);
-    s.classList.remove('active','done');
-    if (i < n) s.classList.add('done');
-    else if (i === n) s.classList.add('active');
-  });
-  [1,2].forEach(i => document.getElementById('l'+i).classList.toggle('done', i < n));
+// ── CAPTURE + ANALYZE ──
+async function captureAndAnalyze() {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    showToast('Configura tu API Key primero ⚙️', 'error');
+    openSettings();
+    return;
+  }
+
+  // Capturar frame del video
+  const video = document.getElementById('camera-feed');
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth || 1280;
+  canvas.height = video.videoHeight || 720;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  capturedImage = canvas.toDataURL('image/jpeg', 0.85);
+
+  await analyzeImage();
 }
 
-function showSection(id) {
-  ['sec-camera','sec-processing','sec-data','sec-send'].forEach(s =>
-    document.getElementById(s).classList.remove('visible'));
-  document.getElementById(id).classList.add('visible');
+// Desde galería
+document.getElementById('file-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (ev) => {
+    capturedImage = ev.target.result;
+    await analyzeImage();
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+});
+
+async function analyzeImage() {
+  if (!capturedImage) return;
+
+  // Mostrar overlay de análisis
+  document.getElementById('analyzing-thumb').src = capturedImage;
+  document.getElementById('analyzing-overlay').classList.add('show');
+
+  const statuses = [
+    ['Analizando producto...', 'Gemini está leyendo la etiqueta'],
+    ['Reconociendo texto...', 'Procesando nombre y presentación'],
+    ['Extrayendo datos...', 'Casi listo...'],
+  ];
+  let idx = 0;
+  const interval = setInterval(() => {
+    idx = (idx+1) % statuses.length;
+    document.getElementById('analyzing-text').textContent = statuses[idx][0];
+    document.getElementById('analyzing-sub').textContent = statuses[idx][1];
+  }, 1200);
+
+  try {
+    const compressed = await compressImage(capturedImage, 1024, 0.82);
+    const base64 = compressed.split(',')[1];
+
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${getApiKey()}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [
+            { inline_data: { mime_type: 'image/jpeg', data: base64 } },
+            { text: 'Eres un experto en leer etiquetas de productos. Analiza la imagen y devuelve UN SOLO campo con toda la información del producto en este formato: "[Marca] [Nombre del producto] [presentación: peso/volumen/cantidad/sabor/variante]". Ejemplo: "Jabón Palmolive Lavanda 350g paquete de 3 pzas". Busca bien el contenido neto, peso, piezas, sabor. Si hay brillos busca en otras partes de la etiqueta. Responde SOLO en JSON puro: {"producto":"..."}' }
+          ]}],
+          generationConfig: { temperature: 0.1, maxOutputTokens: 150 }
+        })
+      }
+    );
+
+    clearInterval(interval);
+
+    if (!resp.ok) {
+      const err = await resp.json();
+      // Reintento automático si es rate limit
+      if (resp.status === 429) {
+        document.getElementById('analyzing-text').textContent = 'Esperando...';
+        document.getElementById('analyzing-sub').textContent = 'Reintentando en 4 segundos';
+        await sleep(4000);
+        document.getElementById('analyzing-overlay').classList.remove('show');
+        await analyzeImage();
+        return;
+      }
+      throw new Error(JSON.stringify(err.error || err));
+    }
+
+    const data = await resp.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+    let parsed = { producto: 'No identificado' };
+
+    try {
+      parsed = JSON.parse(text.replace(/```json|```/g,'').trim());
+    } catch(e) {
+      const m = text.match(/"producto"\s*:\s*"([^"]+)"/);
+      if (m) parsed.producto = m[1];
+    }
+
+    document.getElementById('field-producto').value = parsed.producto || 'No identificado';
+    document.getElementById('result-photo').src = capturedImage;
+    document.getElementById('share-photo-img').src = capturedImage;
+    document.getElementById('precio-estante').value = '';
+    document.getElementById('precio-venta').value = '';
+
+    document.getElementById('analyzing-overlay').classList.remove('show');
+    document.getElementById('result-view').classList.add('show');
+
+  } catch(e) {
+    clearInterval(interval);
+    document.getElementById('analyzing-overlay').classList.remove('show');
+    showToast('Error: ' + (e.message?.substring(0,60) || 'Intenta de nuevo'), 'error');
+  }
 }
 
+function closeResult() {
+  document.getElementById('result-view').classList.remove('show');
+  capturedImage = null;
+  if (!cameraStream) startCamera();
+}
+
+// ── WHATSAPP ──
+function sendWhatsApp() {
+  const producto = document.getElementById('field-producto').value;
+  const precioVenta = document.getElementById('precio-venta').value;
+
+  let msg = `📦 *Producto*\n${producto}`;
+  if (precioVenta) msg += `\n\n💰 *Precio:* $${parseFloat(precioVenta).toFixed(2)}`;
+  msg += `\n\n_EscanPro_`;
+
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+  showToast('¡Abriendo WhatsApp! 🟢', 'success');
+}
+
+// ── SHARE PHOTO ──
+function openSharePhoto() {
+  document.getElementById('share-photo-panel').classList.add('show');
+}
+function closeSharePhoto() {
+  document.getElementById('share-photo-panel').classList.remove('show');
+}
+
+// ── SETTINGS ──
+function openSettings() {
+  document.getElementById('settings-panel').classList.add('show');
+}
+function closeSettings() {
+  document.getElementById('settings-panel').classList.remove('show');
+}
+
+function saveApiKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (!val.startsWith('AIza') || val.length < 20) {
+    showToast('Key inválida, debe empezar con AIza...', 'error');
+    return;
+  }
+  localStorage.setItem('escanpro_gemini_key', val);
+  updateKeyStatus(true);
+  closeSettings();
+  showToast('✓ API Key guardada', 'success');
+}
+
+function updateKeyStatus(ok) {
+  const s = document.getElementById('key-status');
+  s.className = 'key-status ' + (ok ? 'ok' : '');
+  s.textContent = ok ? '✓ Configurada' : 'Sin configurar';
+}
+
+function getApiKey() {
+  return localStorage.getItem('escanpro_gemini_key') || '';
+}
+
+// ── EDIT FIELD ──
+function toggleEdit(fieldId, btn) {
+  const f = document.getElementById(fieldId);
+  if (f.readOnly) {
+    f.readOnly = false; f.classList.remove('readonly'); f.focus(); btn.textContent = '✅';
+  } else {
+    f.readOnly = true; f.classList.add('readonly'); btn.textContent = '✏️';
+    showToast('Campo actualizado', 'success');
+  }
+}
+
+// ── UTILS ──
 function compressImage(dataUrl, maxWidth, quality) {
   return new Promise((resolve) => {
     const img = new Image();
@@ -507,143 +911,22 @@ function compressImage(dataUrl, maxWidth, quality) {
       canvas.width = w; canvas.height = h;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, w, h);
-      // Mejorar contraste para texto en bolsas plásticas
-      const imageData = ctx.getImageData(0, 0, w, h);
-      const data = imageData.data;
-      for (let i = 0; i < data.length; i += 4) {
-        // Aumentar contraste
-        data[i]   = Math.min(255, Math.max(0, (data[i]   - 128) * 1.2 + 128));
-        data[i+1] = Math.min(255, Math.max(0, (data[i+1] - 128) * 1.2 + 128));
-        data[i+2] = Math.min(255, Math.max(0, (data[i+2] - 128) * 1.2 + 128));
+      // Contraste leve para texto en empaques
+      const id = ctx.getImageData(0, 0, w, h);
+      const d = id.data;
+      for (let i = 0; i < d.length; i += 4) {
+        d[i]   = Math.min(255, Math.max(0, (d[i]   - 128) * 1.15 + 128));
+        d[i+1] = Math.min(255, Math.max(0, (d[i+1] - 128) * 1.15 + 128));
+        d[i+2] = Math.min(255, Math.max(0, (d[i+2] - 128) * 1.15 + 128));
       }
-      ctx.putImageData(imageData, 0, 0);
+      ctx.putImageData(id, 0, 0);
       resolve(canvas.toDataURL('image/jpeg', quality));
     };
     img.src = dataUrl;
   });
 }
 
-async function analyzePhoto() {
-  const apiKey = getApiKey();
-  if (!apiKey || !apiKey.startsWith('AIza')) {
-    showToast('Primero ingresa tu Gemini API Key', 'error');
-    document.getElementById('api-key-input').focus();
-    return;
-  }
-  if (!capturedImage) return;
-
-  stopCamera();
-  setStep(2);
-  showSection('sec-processing');
-
-  const statuses = [
-    ['Analizando imagen...', 'Gemini está procesando la fotografía'],
-    ['Reconociendo texto...', 'Leyendo etiquetas y empaque'],
-    ['Extrayendo datos...', 'Identificando nombre y presentación'],
-  ];
-  let idx = 0;
-  const interval = setInterval(() => {
-    idx = (idx+1) % statuses.length;
-    document.getElementById('ai-status-text').textContent = statuses[idx][0];
-    document.getElementById('ai-sub').textContent = statuses[idx][1];
-  }, 1200);
-
-  try {
-    // Comprimir imagen antes de enviar
-    const compressedImage = await compressImage(capturedImage, 1024, 0.82);
-    const base64 = compressedImage.split(',')[1];
-    const mimeType = 'image/jpeg';
-
-    const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [
-            { inline_data: { mime_type: mimeType, data: base64 } },
-            { text: 'Eres un experto en leer etiquetas de productos en bolsas de plástico. La imagen puede tener brillos o texto curvo por la forma de la bolsa. Extrae: 1) Nombre del producto: marca y nombre del producto. 2) Presentación: busca "contenido neto", "peso neto", gramaje en gramos o kilos, mililitros o litros, o cualquier número seguido de g, kg, ml, L, pz. Si hay brillos que tapan texto, busca el dato en otras partes de la bolsa. Responde SOLO en JSON puro: {"nombre":"...","presentacion":"..."}. Si no ves el peso exacto, pon el sabor o variante como presentación.' }
-          ]}],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 300 }
-        })
-      }
-    );
-
-    clearInterval(interval);
-
-    if (!resp.ok) {
-      const err = await resp.json();
-      throw new Error(JSON.stringify(err.error || err));
-    }
-
-    const data = await resp.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-    let parsed = { nombre: 'No identificado', presentacion: 'No identificado' };
-
-    try {
-      parsed = JSON.parse(text.replace(/```json|```/g,'').trim());
-    } catch(e) {
-      const nm = text.match(/"nombre"\s*:\s*"([^"]+)"/);
-      const pr = text.match(/"presentacion"\s*:\s*"([^"]+)"/);
-      if (nm) parsed.nombre = nm[1];
-      if (pr) parsed.presentacion = pr[1];
-    }
-
-    document.getElementById('field-nombre').value = parsed.nombre || 'No identificado';
-    document.getElementById('field-presentacion').value = parsed.presentacion || 'No identificado';
-
-    const thumb = `<img src="${capturedImage}" alt="producto">`;
-    document.getElementById('photo-thumb').innerHTML = thumb;
-    document.getElementById('photo-thumb2').innerHTML = thumb;
-
-    setStep(2);
-    showSection('sec-data');
-    showToast('✓ Datos extraídos correctamente', 'success');
-
-  } catch(e) {
-    clearInterval(interval);
-    showSection('sec-camera');
-    setStep(1);
-    showToast('Error: ' + (e.message || 'Revisa tu API Key'), 'error');
-  }
-}
-
-function toggleEdit(fieldId, btn) {
-  const input = document.getElementById(fieldId);
-  if (input.readOnly) {
-    input.readOnly = false; input.classList.remove('readonly'); input.focus(); btn.textContent = '✅';
-  } else {
-    input.readOnly = true; input.classList.add('readonly'); btn.textContent = '✏️';
-    showToast('Campo actualizado', 'success');
-  }
-}
-
-function showSendSection() {
-  document.getElementById('summary-nombre').textContent = document.getElementById('field-nombre').value;
-  document.getElementById('summary-presentacion').textContent = document.getElementById('field-presentacion').value;
-  setStep(3);
-  showSection('sec-send');
-}
-
-function goBackToData() { setStep(2); showSection('sec-data'); }
-
-function sendWhatsApp() {
-  const nombre = document.getElementById('field-nombre').value;
-  const pres = document.getElementById('field-presentacion').value;
-  const msg = encodeURIComponent(`📦 *Producto Escaneado*\n\n🏷️ *Nombre:* ${nombre}\n📋 *Presentación:* ${pres}\n\n_Enviado desde EscanPro_`);
-  window.open(`https://wa.me/?text=${msg}`, '_blank');
-  showToast('¡Abriendo WhatsApp! 🟢', 'success');
-}
-
-function resetAll() {
-  capturedImage = null; stopCamera();
-  canvasPreview.style.display = 'none'; placeholder.style.display = 'flex';
-  btnAnalyze.disabled = true; btnCam.innerHTML = '📷 Cámara'; btnCam.onclick = activateCamera;
-  fileInput.value = '';
-  document.getElementById('field-nombre').value = '';
-  document.getElementById('field-presentacion').value = '';
-  setStep(1); showSection('sec-camera');
-}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 function showToast(msg, type='') {
   const t = document.getElementById('toast');
