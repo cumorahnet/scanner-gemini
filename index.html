@@ -13,47 +13,111 @@
   * { margin:0; padding:0; box-sizing:border-box; }
   body { background:var(--bg); color:var(--text); font-family:monospace; }
 
-  /* Vistas */
-  #lens-view, #result-view, #analyzing-overlay { position: fixed; inset: 0; }
+  #lens-view, #result-view, #analyzing-overlay, #key-screen { position: fixed; inset: 0; }
+
+  /* ── PANTALLA API KEY (reemplaza el prompt() que los móviles bloquean) ── */
+  #key-screen {
+    background: var(--bg); z-index: 200;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 40px 30px; gap: 16px;
+  }
+  #key-screen h2 { color: var(--accent); font-size: 1rem; letter-spacing: 2px; }
+  #key-screen p  { color: var(--muted); font-size: 0.75rem; text-align: center; line-height: 1.6; }
+  #key-input {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px; color: #fff; font-family: monospace;
+    font-size: 0.8rem; outline: none;
+  }
+  #key-screen .btn { font-size: 0.85rem; }
+
+  /* ── CÁMARA ── */
   #lens-view { background: #000; display: flex; flex-direction: column; z-index: 10; }
   #camera-feed { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   
-  .ui-top { position: relative; z-index: 20; padding: 50px 20px; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); display: flex; justify-content: space-between; align-items: center; }
-  .ui-bottom { position: absolute; bottom: 0; left: 0; right: 0; z-index: 20; padding: 40px 20px; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); display: flex; flex-direction: column; align-items: center; }
+  .ui-top {
+    position: relative; z-index: 20; padding: 50px 20px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .ui-bottom {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 20;
+    padding: 40px 20px;
+    background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
   
-  .btn-capture { width: 80px; height: 80px; border-radius: 50%; border: 5px solid #fff; background: rgba(255,255,255,0.2); cursor: pointer; }
-  
+  .btn-capture {
+    width: 80px; height: 80px; border-radius: 50%;
+    border: 5px solid #fff; background: rgba(255,255,255,0.2); cursor: pointer;
+  }
+
+  /* ── RESULTADO ── */
   #result-view { background: var(--bg); z-index: 50; display: none; flex-direction: column; overflow-y: auto; }
   #result-view.show { display: flex; }
   .result-photo { width: 100%; height: 250px; object-fit: cover; border-bottom: 2px solid var(--accent); }
   .result-body { padding: 20px; }
   
-  .input-f { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; color: #fff; margin-bottom: 15px; font-family: monospace; outline: none; }
+  .input-f {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px; color: #fff; margin-bottom: 15px;
+    font-family: monospace; outline: none;
+  }
   .btn { padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; font-family: monospace; width: 100%; margin-top: 10px; }
-  .btn-primary { background: var(--accent); color: #000; }
-  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-primary  { background: var(--accent); color: #000; }
+  .btn-outline  { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-danger   { background: transparent; border: 1px solid #ff4466; color: #ff4466; font-size: 0.7rem; }
 
-  #analyzing-overlay { background: rgba(0,0,0,0.85); z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; }
+  /* ── OVERLAY ANALIZANDO ── */
+  #analyzing-overlay {
+    background: rgba(0,0,0,0.85); z-index: 100;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+  }
   #analyzing-overlay.show { display: flex; }
-  .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+  .spinner {
+    width: 40px; height: 40px; border: 4px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c1c2e; border: 1px solid var(--accent); padding: 12px; border-radius: 8px; display: none; z-index: 1000; font-size: 11px; max-width: 80%; }
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: #1c1c2e; border: 1px solid var(--accent);
+    padding: 12px; border-radius: 8px; display: none;
+    z-index: 1000; font-size: 11px; max-width: 85%; text-align: center;
+  }
 </style>
 </head>
 <body>
 
+<!-- ══ PANTALLA INGRESO DE API KEY ══════════════════════════════════ -->
+<!-- FIX #4: Reemplaza prompt() que los móviles bloquean              -->
+<div id="key-screen" style="display:none;">
+  <h2>⚙ CONFIGURACIÓN</h2>
+  <p>Ingresa tu API Key de Gemini.<br>Se guarda localmente en tu dispositivo.</p>
+  <input id="key-input" type="password" placeholder="AIzaSy...">
+  <button class="btn btn-primary" onclick="saveKey()">GUARDAR Y CONTINUAR</button>
+  <p style="font-size:0.65rem;">
+    Obtén tu key gratis en
+    <a href="https://aistudio.google.com/app/apikey" style="color:var(--accent);">aistudio.google.com</a>
+  </p>
+</div>
+
+<!-- ══ VISTA CÁMARA ════════════════════════════════════════════════ -->
 <div id="lens-view">
   <video id="camera-feed" autoplay playsinline muted></video>
   <div class="ui-top">
-    <div style="font-weight: bold; color: var(--accent);">SCANNER PRO v3</div>
-    <button class="btn-outline" onclick="openSearch()" style="width: auto; padding: 5px 10px;">🔍 INVENTARIO</button>
+    <div style="font-weight: bold; color: var(--accent);">SCANNER PRO v3.1</div>
+    <button class="btn-outline" onclick="openSearch()" style="width:auto; padding:5px 10px;">🔍 INVENTARIO</button>
   </div>
   <div class="ui-bottom">
     <button class="btn-capture" onclick="captureAndAnalyze()"></button>
+    <button class="btn-danger" style="width:auto; padding:4px 14px; margin-top:4px;" onclick="resetKey()">cambiar api key</button>
   </div>
 </div>
 
+<!-- ══ VISTA RESULTADO ═════════════════════════════════════════════ -->
 <div id="result-view">
   <img id="result-photo" class="result-photo">
   <div class="result-body">
@@ -76,15 +140,18 @@
   </div>
 </div>
 
+<!-- ══ OVERLAY ANALIZANDO ══════════════════════════════════════════ -->
 <div id="analyzing-overlay">
   <div class="spinner"></div>
-  <p style="margin-top: 15px; font-size: 12px;">ANALIZANDO PRODUCTO...</p>
+  <p style="margin-top: 15px; font-size: 12px; color: var(--accent);">ANALIZANDO PRODUCTO...</p>
 </div>
 
 <div id="toast" class="toast"></div>
 
 <script>
-// 1. CONFIGURACIÓN FIREBASE
+/* ─────────────────────────────────────────────────────────────────
+   CONFIGURACIÓN FIREBASE
+───────────────────────────────────────────────────────────────── */
 const firebaseConfig = {
   apiKey: "AIzaSyB3kiLskvkV6cJ0byaCg_zqe-GIWM3jelI",
   authDomain: "ofertas-rapidas-con-scanner.firebaseapp.com",
@@ -95,113 +162,202 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const db      = firebase.firestore();
 const storage = firebase.storage();
 let currentBlob = null;
 
-// Inicialización
+/* ─────────────────────────────────────────────────────────────────
+   INICIO
+───────────────────────────────────────────────────────────────── */
 window.onload = () => {
-  let key = localStorage.getItem('gemini_key');
+  const key = localStorage.getItem('gemini_key');
   if (!key || key.length < 10) {
-    const n = prompt("Ingresa tu API Key de Gemini:");
-    if (n) localStorage.setItem('gemini_key', n);
+    // FIX #4: pantalla propia en lugar de prompt()
+    document.getElementById('key-screen').style.display = 'flex';
+    document.getElementById('lens-view').style.display  = 'none';
+  } else {
+    startCamera();
   }
-  startCamera();
 };
 
-async function startCamera() {
-  try {
-    const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-    document.getElementById('camera-feed').srcObject = s;
-  } catch (e) { showToast("Error de cámara"); }
+function saveKey() {
+  const k = document.getElementById('key-input').value.trim();
+  if (!k || k.length < 10) { showToast("⚠️ API Key inválida"); return; }
+  localStorage.setItem('gemini_key', k);
+  document.getElementById('key-screen').style.display = 'none';
+  document.getElementById('lens-view').style.display  = 'flex';
+  startCamera();
 }
 
+function resetKey() {
+  localStorage.removeItem('gemini_key');
+  document.getElementById('key-input').value = '';
+  document.getElementById('key-screen').style.display = 'flex';
+  document.getElementById('lens-view').style.display  = 'none';
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   CÁMARA
+───────────────────────────────────────────────────────────────── */
+async function startCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
+    });
+    document.getElementById('camera-feed').srcObject = stream;
+  } catch (e) {
+    showToast("Error de cámara: " + e.message);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   CAPTURA
+───────────────────────────────────────────────────────────────── */
 async function captureAndAnalyze() {
   const v = document.getElementById('camera-feed');
-  const c = document.createElement('canvas');
-  c.width = v.videoWidth; c.height = v.videoHeight;
-  c.getContext('2d').drawImage(v, 0, 0);
-  
-  c.toBlob(async (blob) => {
+
+  // FIX #2: verificar que el video ya tiene dimensiones
+  if (!v.srcObject || v.videoWidth === 0 || v.videoHeight === 0) {
+    showToast("⚠️ Cámara no lista, espera un segundo e intenta de nuevo");
+    return;
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width  = v.videoWidth;
+  canvas.height = v.videoHeight;
+  canvas.getContext('2d').drawImage(v, 0, 0);
+
+  canvas.toBlob(async (blob) => {
+    if (!blob) { showToast("Error al capturar imagen"); return; }
     currentBlob = blob;
     document.getElementById('result-photo').src = URL.createObjectURL(blob);
+
     const reader = new FileReader();
     reader.onloadend = () => callIA(reader.result.split(',')[1]);
     reader.readAsDataURL(blob);
-  }, 'image/jpeg', 0.8);
+  }, 'image/jpeg', 0.88);
 }
 
-// FUNCIÓN IA CORREGIDA (Sin v1beta)
+/* ─────────────────────────────────────────────────────────────────
+   IA — GEMINI
+   FIX #1: modelo gemini-2.5-flash-lite en v1beta (gratuito y activo)
+───────────────────────────────────────────────────────────────── */
 async function callIA(base64) {
   document.getElementById('analyzing-overlay').classList.add('show');
   const key = localStorage.getItem('gemini_key');
-  
-  // Usamos la URL v1 para evitar el error de modelo no encontrado
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
+
+  // Modelo correcto para tier gratuito en 2025
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`;
+
+  const prompt = `Eres un lector experto de etiquetas de productos de consumo en México.
+Analiza la imagen y extrae:
+1. Marca comercial del producto.
+2. Nombre del producto.
+3. Presentación (gramaje, volumen o número de piezas).
+
+Responde ÚNICAMENTE con JSON válido, sin texto extra ni backticks:
+{"nombre":"MARCA + NOMBRE DEL PRODUCTO","presentacion":"PRESENTACIÓN"}`;
 
   try {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ inline_data: { mime_type: 'image/jpeg', data: base64 } }, { text: 'Analiza la imagen y extrae marca y descripción completa del producto.' }] }]
+        contents: [{ parts: [
+          { inline_data: { mime_type: 'image/jpeg', data: base64 } },
+          { text: prompt }
+        ]}],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 200 }
       })
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error ? data.error.message : "Error API");
+    if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
 
-    const texto = data.candidates[0].content.parts[0].text;
-    document.getElementById('field-desc').value = texto.trim();
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const clean   = rawText.replace(/```json|```/gi, '').trim();
+
+    let descripcion = '';
+    try {
+      const parsed = JSON.parse(clean);
+      descripcion = `${parsed.nombre || ''} ${parsed.presentacion || ''}`.trim().toUpperCase();
+    } catch {
+      // Si Gemini no devolvió JSON limpio, usar el texto tal cual
+      descripcion = clean.toUpperCase();
+    }
+
+    document.getElementById('field-desc').value = descripcion;
     document.getElementById('analyzing-overlay').classList.remove('show');
     document.getElementById('result-view').classList.add('show');
+
   } catch (e) {
     document.getElementById('analyzing-overlay').classList.remove('show');
     showToast("Error Gemini: " + e.message);
+    console.error(e);
   }
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   GUARDAR EN FIREBASE
+   FIX #3: btn.disabled = false dentro del bloque finally
+───────────────────────────────────────────────────────────────── */
 async function saveData() {
-  const btn = document.getElementById('btn-save');
+  const btn    = document.getElementById('btn-save');
   const nombre = document.getElementById('field-desc').value.trim();
-  if(!nombre) { showToast("⚠️ No hay descripción para guardar"); return; }
+  if (!nombre) { showToast("⚠️ No hay descripción para guardar"); return; }
 
-  btn.disabled = true; btn.innerText = "GUARDANDO...";
+  btn.disabled  = true;
+  btn.innerText = "GUARDANDO...";
+
   try {
-    // 1. Guardar Foto
-    const path = `productos/${Date.now()}.jpg`;
-    const ref = storage.ref(path);
+    // 1. Subir foto a Storage
+    const path    = `productos/${Date.now()}.jpg`;
+    const ref     = storage.ref(path);
     await ref.put(currentBlob);
-    const url = await ref.getDownloadURL();
-    
-    // 2. Guardar Datos
+    const fotoUrl = await ref.getDownloadURL();
+
+    // 2. Guardar datos en Firestore
     await db.collection("productos").add({
-      nombre: nombre,
+      nombre:          nombre,
       nombre_busqueda: nombre.toLowerCase(),
-      precio_anaquel: parseFloat(document.getElementById('field-costo').value) || 0,
-      precio_venta: parseFloat(document.getElementById('field-venta').value) || 0,
-      foto: url,
-      creado: firebase.firestore.FieldValue.serverTimestamp()
+      precio_anaquel:  parseFloat(document.getElementById('field-costo').value) || 0,
+      precio_venta:    parseFloat(document.getElementById('field-venta').value) || 0,
+      foto:            fotoUrl,
+      creado:          firebase.firestore.FieldValue.serverTimestamp()
     });
-    
-    alert("✅ Producto guardado en Firebase");
+
+    showToast("✅ Producto guardado correctamente");
     closeResult();
-  } catch (e) { showToast("Error Firebase: " + e.message); }
-  btn.disabled = false; btn.innerText = "GUARDAR EN FIREBASE";
+
+  } catch (e) {
+    showToast("Error Firebase: " + e.message);
+    console.error(e);
+  } finally {
+    // FIX #3: siempre se reactiva el botón, haya o no error
+    btn.disabled  = false;
+    btn.innerText = "GUARDAR EN FIREBASE";
+  }
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   UTILIDADES
+───────────────────────────────────────────────────────────────── */
 function showToast(m) {
-  const t = document.getElementById('toast'); t.innerText = m; t.style.display = 'block';
+  const t = document.getElementById('toast');
+  t.innerText      = m;
+  t.style.display  = 'block';
   setTimeout(() => t.style.display = 'none', 5000);
 }
 
-function closeResult() { 
-  document.getElementById('result-view').classList.remove('show'); 
+function closeResult() {
+  document.getElementById('result-view').classList.remove('show');
+  document.getElementById('field-desc').value  = "";
   document.getElementById('field-costo').value = "";
   document.getElementById('field-venta').value = "";
+  currentBlob = null;
 }
 
-function openSearch() { alert("Buscador próximamente..."); }
+function openSearch() { showToast("Buscador próximamente..."); }
 </script>
 </body>
 </html>
