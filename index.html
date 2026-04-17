@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Yaute v33.7 - Estabilidad Total</title>
+    <title>Yaute v33.8 - Motor Universal</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -11,47 +11,41 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
     <style>
-        :root { --primary: #0f172a; --accent: #3b82f6; --success: #10b981; --bg: #f8fafc; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); margin: 0; padding: 0; }
+        :root { --primary: #0f172a; --accent: #3b82f6; --bg: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); margin: 0; }
         header { background: var(--primary); color: white; padding: 1.2rem; text-align: center; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; }
-        
-        #home-selector { display: flex; flex-direction: column; gap: 15px; padding: 20px; }
-        .btn-mode { padding: 30px; border-radius: 20px; border: none; color: white; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 15px; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        
         .card-custom { background: white; border-radius: 20px; padding: 20px; margin: 15px; border: 1px solid #f1f5f9; box-shadow: 0 4px 20px rgba(0,0,0,0.05); position: relative; }
         .form-control { padding: 0.8rem; border-radius: 12px; border: 2px solid #f1f5f9; text-transform: uppercase; font-weight: bold; }
         .sug-box { position: absolute; top: 100%; left: 0; right: 0; background: white; border-radius: 12px; max-height: 200px; overflow-y: auto; z-index: 2000; border: 1px solid #e2e8f0; }
         .sug-item { padding: 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; font-weight: 700; }
-
-        #key-config-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 20000; display: none; align-items: center; justify-content: center; padding: 20px; }
-        
         #ia-modal { position: fixed; inset: 0; background: #000; z-index: 10000; display: none; flex-direction: column; }
         #cam-preview-ia { width: 100%; height: 100%; object-fit: cover; }
-        .scan-frame { width: 80%; height: 45%; border: 3px solid #00e5c0; border-radius: 24px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 0 4000px rgba(0,0,0,0.6); pointer-events: none; }
+        .scan-frame { width: 80%; height: 40%; border: 3px solid #00e5c0; border-radius: 24px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 0 4000px rgba(0,0,0,0.6); pointer-events: none; }
+        #key-config-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 20000; display: none; align-items: center; justify-content: center; padding: 20px; }
     </style>
 </head>
 <body>
 
     <div id="key-config-modal">
         <div class="card-custom w-100" style="max-width: 400px; text-align: center;">
-            <h5 class="fw-bold mb-3">ACTIVAR IA</h5>
-            <p class="small text-muted">Pega tu llave aquí (AQ o AIza).<br>Esto evita bloqueos de GitHub.</p>
-            <input type="text" id="user-gemini-key" class="form-control mb-3" placeholder="Pega tu clave...">
-            <button class="btn btn-primary w-100 rounded-pill fw-bold" onclick="saveGeminiKey()">GUARDAR LLAVE</button>
+            <h5 class="fw-bold mb-3">ACTIVAR ESCÁNER</h5>
+            <p class="small text-muted">Pega tu clave (AQ o AIza).<br>Se guardará solo en este dispositivo.</p>
+            <input type="text" id="user-gemini-key" class="form-control mb-3" placeholder="Pega tu clave aquí...">
+            <button class="btn btn-primary w-100 rounded-pill fw-bold" onclick="saveKey()">ACTIVAR</button>
         </div>
     </div>
 
     <header>
-        <h6 class="m-0 fw-bold">Ofertas Rápidas Yaute v33.7</h6>
+        <h6 class="m-0 fw-bold">Ofertas Rápidas Yaute v33.8</h6>
         <div id="status-dot" style="width:10px; height:10px; border-radius:50%; background:orange; display:inline-block;"></div>
     </header>
 
-    <div id="home-selector">
-        <button class="btn-mode" style="background: linear-gradient(135deg, #00e5c0, #00a884);" onclick="openScanner()">
-            <i class="fas fa-camera fa-2x"></i> PUBLICAR OFERTA (IA)
+    <div id="home-selector" style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+        <button class="btn btn-dark py-4 rounded-4 fw-bold" onclick="openScanner()">
+            <i class="fas fa-camera me-2"></i> PUBLICAR CON IA
         </button>
-        <button class="btn-mode" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);" onclick="showTab('operaciones')">
-            <i class="fas fa-cash-register fa-2x"></i> REGISTRAR VENTAS
+        <button class="btn btn-primary py-4 rounded-4 fw-bold" onclick="showTab('operaciones')">
+            <i class="fas fa-cash-register me-2"></i> REGISTRAR VENTAS
         </button>
     </div>
 
@@ -69,7 +63,7 @@
                 <div class="col-6"><label class="small fw-bold">COSTO $</label><input type="number" id="in-costo" class="form-control"></div>
                 <div class="col-6"><label class="small fw-bold">VENTA $</label><input type="number" id="in-precio" class="form-control"></div>
             </div>
-            <button class="btn btn-primary w-100 py-3 rounded-pill fw-bold" onclick="saveRecord()">GUARDAR VENTA</button>
+            <button class="btn btn-primary w-100 py-3 rounded-pill fw-bold" onclick="saveRecord()">GUARDAR</button>
             <button class="btn btn-light w-100 mt-2 rounded-pill" onclick="location.reload()">VOLVER</button>
         </div>
     </div>
@@ -77,8 +71,10 @@
     <div id="ia-modal">
         <video id="cam-preview-ia" autoplay playsinline muted></video>
         <div class="scan-frame"></div>
-        <button class="btn btn-dark" style="position:absolute; top:20px; left:20px; border-radius:50px;" onclick="closeScanner()">✕ SALIR</button>
-        <button id="snap-btn" class="btn btn-light" style="position:absolute; bottom:40px; left:50%; transform:translateX(-50%); width:80px; height:80px; border-radius:50%;" onclick="captureIA()"><i class="fas fa-camera fa-2x"></i></button>
+        <button class="btn btn-dark" style="position:absolute; top:20px; left:20px; border-radius:50px;" onclick="closeScanner()">✕</button>
+        <button id="snap-btn" class="btn btn-light" style="position:absolute; bottom:40px; left:50%; transform:translateX(-50%); width:75px; height:75px; border-radius:50%;" onclick="captureIA()">
+            <i class="fas fa-camera fa-2x"></i>
+        </button>
     </div>
 
     <script>
@@ -88,13 +84,13 @@
         let state = { products: [], clients: [], stores: [] };
         let stream = null;
 
-        function saveGeminiKey() {
+        function saveKey() {
             const val = document.getElementById('user-gemini-key').value.trim();
-            if(val) { localStorage.setItem('yaute_key_final', val); location.reload(); }
+            if(val) { localStorage.setItem('key_yaute_v33', val); location.reload(); }
         }
 
         function startSync() {
-            if(!localStorage.getItem('yaute_key_final')) {
+            if(!localStorage.getItem('key_yaute_v33')) {
                 document.getElementById('key-config-modal').style.display = 'flex';
                 return;
             }
@@ -146,29 +142,36 @@
         }
 
         async function captureIA() {
-            const key = localStorage.getItem('yaute_key_final');
+            const key = localStorage.getItem('key_yaute_v33');
             const video = document.getElementById('cam-preview-ia');
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
             const b64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+            
             document.getElementById('snap-btn').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
             try {
-                // Ruta v1beta forzada para llaves AQ
+                // MOTOR UNIVERSAL: Forzamos el uso de v1beta que es el más flexible con llaves de Cloud (AQ)
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ contents: [{ parts: [{ inline_data: { mime_type: 'image/jpeg', data: b64 } }, { text: "MARCA Y PRODUCTO. TODO MAYÚSCULAS." }] }] })
+                    body: JSON.stringify({ 
+                        contents: [{ parts: [{ inline_data: { mime_type: 'image/jpeg', data: b64 } }, { text: "Marca y producto en MAYÚSCULAS." }] }] 
+                    })
                 });
-                const d = await res.json();
-                const nombre = d.candidates[0].content.parts[0].text.trim();
                 
-                const existe = state.products.find(p => p.nombre.toUpperCase() === nombre.toUpperCase());
-                if(existe) alert("⚠️ YA EXISTE");
+                const data = await res.json();
+                
+                if(data.error) {
+                    throw new Error(data.error.message);
+                }
 
-                const v = prompt("VENTA:", existe ? existe.precio : "");
-                const a = prompt("ANAQUEL:", existe ? existe.costo : "");
+                const nombre = data.candidates[0].content.parts[0].text.trim();
+                const existe = state.products.find(p => p.nombre.toUpperCase() === nombre.toUpperCase());
+                
+                const v = prompt(`PRODUCTO: ${nombre}\nPRECIO VENTA:`, existe ? existe.precio : "");
+                const a = prompt(`PRECIO COSTO:`, existe ? existe.costo : "");
 
                 if(v) {
                     const blob = await (await fetch(canvas.toDataURL('image/jpeg'))).blob();
@@ -177,7 +180,11 @@
                     if(!existe) db.collection('artifacts/yaute-v1-shared/public/data/products').add({ nombre, costo: parseFloat(a)||0, precio: parseFloat(v) });
                     location.reload();
                 }
-            } catch(e) { alert("Error: Llave inválida."); localStorage.removeItem('yaute_key_final'); location.reload(); }
+            } catch(e) { 
+                alert("ERROR DE LLAVE: " + e.message); 
+                localStorage.removeItem('key_yaute_v33');
+                location.reload();
+            }
         }
 
         function showTab(id) {
