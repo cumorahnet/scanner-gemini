@@ -10,63 +10,102 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 
 <style>
-  :root { --bg: #0a0a0f; --surface: #13131c; --border: #2a2a45; --accent: #00e5c0; --text: #e8e8f0; --muted: #6b6b8a; }
+  :root {
+    --bg: #0a0a0f; --surface: #13131c; --border: #2a2a45;
+    --accent: #00e5c0; --text: #e8e8f0; --muted: #6b6b8a;
+  }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:var(--bg); color:var(--text); font-family:monospace; overflow-x: hidden; }
+  body { background:var(--bg); color:var(--text); font-family:monospace; overflow-x:hidden; }
 
-  /* Pantallas */
-  #lens-view, #result-view, #analyzing-overlay, #key-screen, #search-modal { position: fixed; inset: 0; }
+  #lens-view, #result-view, #analyzing-overlay, #key-screen, #search-modal { position:fixed; inset:0; }
 
-  /* ── PANTALLA API KEY ── */
-  #key-screen { background: var(--bg); z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; gap: 15px; }
-  #key-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px; color: #fff; font-family: monospace; outline: none; }
+  /* ── API KEY ── */
+  #key-screen {
+    background:var(--bg); z-index:200;
+    display:flex; flex-direction:column; align-items:center;
+    justify-content:center; padding:30px; gap:15px;
+  }
+  #key-input {
+    width:100%; background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; padding:14px; color:#fff; font-family:monospace; outline:none;
+  }
 
   /* ── CÁMARA ── */
-  #lens-view { background: #000; display: flex; flex-direction: column; z-index: 10; }
-  #camera-feed { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .ui-top { position: relative; z-index: 20; padding: 50px 20px; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); display: flex; justify-content: space-between; align-items: center; }
-  .ui-bottom { position: absolute; bottom: 0; left: 0; right: 0; z-index: 20; padding: 40px 20px; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); display: flex; flex-direction: column; align-items: center; gap: 10px; }
-  .btn-capture { width: 80px; height: 80px; border-radius: 50%; border: 5px solid #fff; background: rgba(255,255,255,0.2); cursor: pointer; }
+  #lens-view { background:#000; display:flex; flex-direction:column; z-index:10; }
+  #camera-feed { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .ui-top {
+    position:relative; z-index:20; padding:50px 20px;
+    background:linear-gradient(to bottom,rgba(0,0,0,0.7),transparent);
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .ui-bottom {
+    position:absolute; bottom:0; left:0; right:0; z-index:20; padding:40px 20px;
+    background:linear-gradient(to top,rgba(0,0,0,0.7),transparent);
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+  }
+  .btn-capture {
+    width:80px; height:80px; border-radius:50%;
+    border:5px solid #fff; background:rgba(255,255,255,0.2); cursor:pointer;
+  }
 
   /* ── RESULTADO ── */
-  #result-view { background: var(--bg); z-index: 50; display: none; flex-direction: column; overflow-y: auto; }
-  #result-view.show { display: flex; }
-  .result-photo { width: 100%; height: 250px; object-fit: cover; border-bottom: 2px solid var(--accent); }
-  .result-body { padding: 20px; }
-  .input-f { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; color: #fff; margin-bottom: 15px; font-family: monospace; outline: none; }
-  
-  .btn { padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; font-family: monospace; width: 100%; margin-top: 10px; }
-  .btn-primary { background: var(--accent); color: #000; }
-  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
-  .btn-danger { background: transparent; border: 1px solid #ff4466; color: #ff4466; font-size: 0.7rem; width: auto; padding: 4px 14px; }
+  #result-view { background:var(--bg); z-index:50; display:none; flex-direction:column; overflow-y:auto; }
+  #result-view.show { display:flex; }
+  .result-photo { width:100%; height:250px; object-fit:cover; border-bottom:2px solid var(--accent); }
+  .result-body { padding:20px; }
+  .input-f {
+    width:100%; background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; padding:12px; color:#fff; margin-bottom:15px;
+    font-family:monospace; outline:none;
+  }
+  .btn { padding:12px; border-radius:10px; border:none; font-weight:bold; cursor:pointer; font-family:monospace; width:100%; margin-top:10px; }
+  .btn-primary { background:var(--accent); color:#000; }
+  .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text); }
+  .btn-danger  { background:transparent; border:1px solid #ff4466; color:#ff4466; font-size:0.7rem; width:auto; padding:4px 14px; }
 
   /* ── ANALIZANDO ── */
-  #analyzing-overlay { background: rgba(0,0,0,0.85); z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; }
-  #analyzing-overlay.show { display: flex; }
-  .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  #analyzing-overlay { background:rgba(0,0,0,0.85); z-index:100; display:none; flex-direction:column; align-items:center; justify-content:center; }
+  #analyzing-overlay.show { display:flex; }
+  .spinner { width:40px; height:40px; border:4px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 1s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
 
-  /* ── BUSCADOR / INVENTARIO ── */
-  #search-modal { background: var(--bg); z-index: 250; display: none; flex-direction: column; padding: 20px; overflow-y: auto; }
-  .search-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px; display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-  .search-card img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; }
+  /* ── BUSCADOR ── */
+  #search-modal { background:var(--bg); z-index:250; display:none; flex-direction:column; padding:20px; overflow-y:auto; }
+  .search-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    padding:10px; display:flex; align-items:center; gap:12px; margin-bottom:10px;
+  }
+  .search-card img { width:60px; height:60px; object-fit:cover; border-radius:6px; flex-shrink:0; }
+  .share-btn-inv {
+    background:#25d366; border:none; border-radius:8px;
+    padding:8px 10px; color:#000; font-weight:bold;
+    cursor:pointer; font-size:11px; white-space:nowrap; font-family:monospace;
+  }
 
-  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c1c2e; border: 1px solid var(--accent); padding: 12px; border-radius: 8px; display: none; z-index: 1000; font-size: 11px; max-width: 85%; text-align: center; }
+  /* ── TOAST ── */
+  .toast {
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    background:#1c1c2e; border:1px solid var(--accent);
+    padding:12px 16px; border-radius:8px; display:none;
+    z-index:9999; font-size:11px; max-width:85%; text-align:center; line-height:1.5;
+  }
 </style>
 </head>
 <body>
 
+<!-- API KEY -->
 <div id="key-screen" style="display:none;">
   <h2 style="color:var(--accent); font-size:1rem;">⚙ CONFIGURACIÓN</h2>
-  <p style="font-size:0.75rem; text-align:center; color:var(--muted);">Ingresa tu API Key de Gemini para el escáner.</p>
+  <p style="font-size:0.75rem; text-align:center; color:var(--muted);">Ingresa tu API Key de Gemini.</p>
   <input id="key-input" type="password" placeholder="AIzaSy...">
   <button class="btn btn-primary" onclick="saveKey()">GUARDAR Y EMPEZAR</button>
 </div>
 
+<!-- CÁMARA -->
 <div id="lens-view">
   <video id="camera-feed" autoplay playsinline muted></video>
   <div class="ui-top">
-    <div style="font-weight: bold; color: var(--accent);">SCANNER PRO v4.0</div>
+    <div style="font-weight:bold; color:var(--accent);">SCANNER PRO v4.1</div>
     <button class="btn-outline" onclick="openSearch()" style="width:auto; padding:5px 12px;">🔍 INVENTARIO</button>
   </div>
   <div class="ui-bottom">
@@ -75,36 +114,43 @@
   </div>
 </div>
 
+<!-- RESULTADO -->
 <div id="result-view">
   <img id="result-photo" class="result-photo">
   <div class="result-body">
-    <label style="font-size: 10px; color: var(--muted);">IDENTIFICACIÓN PRODUCTO</label>
+    <label style="font-size:10px; color:var(--muted);">IDENTIFICACIÓN PRODUCTO</label>
     <textarea id="field-desc" class="input-f" rows="3"></textarea>
-    <div style="display: flex; gap: 10px;">
-      <div style="flex: 1;"><label style="font-size:10px; color:var(--muted);">ANAQUEL $</label><input type="number" id="field-costo" class="input-f"></div>
-      <div style="flex: 1;"><label style="font-size:10px; color:var(--muted);">VENTA $</label><input type="number" id="field-venta" class="input-f"></div>
+    <div style="display:flex; gap:10px;">
+      <div style="flex:1;"><label style="font-size:10px; color:var(--muted);">ANAQUEL $</label><input type="number" id="field-costo" class="input-f"></div>
+      <div style="flex:1;"><label style="font-size:10px; color:var(--muted);">VENTA $</label><input type="number" id="field-venta" class="input-f"></div>
     </div>
     <button class="btn btn-primary" id="btn-save" onclick="saveData()">GUARDAR EN FIREBASE</button>
     <button class="btn btn-outline" onclick="closeResult()">CANCELAR</button>
   </div>
 </div>
 
+<!-- BUSCADOR -->
 <div id="search-modal">
-  <h2 style="color:var(--accent); margin-bottom:15px;">📦 INVENTARIO</h2>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+    <h2 style="color:var(--accent);">📦 INVENTARIO</h2>
+    <button class="btn-outline" onclick="closeSearch()" style="width:auto; padding:5px 12px;">✕ CERRAR</button>
+  </div>
   <input type="text" id="search-input" class="input-f" placeholder="Buscar por nombre..." oninput="runSearch()">
   <div id="search-results"></div>
-  <button class="btn btn-outline" onclick="closeSearch()">CERRAR</button>
 </div>
 
+<!-- ANALIZANDO -->
 <div id="analyzing-overlay">
   <div class="spinner"></div>
-  <p style="margin-top: 15px; color: var(--accent);">GEMINI ANALIZANDO...</p>
+  <p style="margin-top:15px; color:var(--accent);">GEMINI ANALIZANDO...</p>
 </div>
 
 <div id="toast" class="toast"></div>
 
 <script>
-// 1. CONFIGURACIÓN FIREBASE
+/* ══════════════════════════════════════════════
+   FIREBASE
+══════════════════════════════════════════════ */
 const firebaseConfig = {
   apiKey: "AIzaSyB3kiLskvkV6cJ0byaCg_zqe-GIWM3jelI",
   authDomain: "ofertas-rapidas-con-scanner.firebaseapp.com",
@@ -113,13 +159,14 @@ const firebaseConfig = {
   messagingSenderId: "1093159890306",
   appId: "1:1093159890306:web:67211603ff99753207f39b"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db      = firebase.firestore();
 const storage = firebase.storage();
 let currentBlob = null;
 
-// 2. INICIO Y LLAVES
+/* ══════════════════════════════════════════════
+   INICIO
+══════════════════════════════════════════════ */
 window.onload = () => {
   const key = localStorage.getItem('gemini_key');
   if (!key || key.length < 10) {
@@ -132,45 +179,47 @@ window.onload = () => {
 
 function saveKey() {
   const k = document.getElementById('key-input').value.trim();
-  if (k.length > 10) {
-    localStorage.setItem('gemini_key', k);
-    location.reload();
-  }
+  if (k.length > 10) { localStorage.setItem('gemini_key', k); location.reload(); }
 }
+function resetKey() { localStorage.removeItem('gemini_key'); location.reload(); }
 
-function resetKey() {
-  localStorage.removeItem('gemini_key');
-  location.reload();
-}
-
-// 3. CÁMARA
+/* ══════════════════════════════════════════════
+   CÁMARA
+══════════════════════════════════════════════ */
 async function startCamera() {
   try {
-    const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: 1280 } });
+    const s = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1920 } }
+    });
     document.getElementById('camera-feed').srcObject = s;
-  } catch (e) { showToast("Error de cámara"); }
+  } catch (e) { showToast("Error de cámara: " + e.message); }
 }
 
-// 4. CAPTURA E IA
+/* ══════════════════════════════════════════════
+   CAPTURA + IA
+══════════════════════════════════════════════ */
 async function captureAndAnalyze() {
   const v = document.getElementById('camera-feed');
+  if (!v.srcObject || v.videoWidth === 0) { showToast("⚠️ Cámara no lista, espera un momento"); return; }
+
   const canvas = document.createElement('canvas');
-  canvas.width = v.videoWidth; canvas.height = v.videoHeight;
+  canvas.width  = v.videoWidth;
+  canvas.height = v.videoHeight;
   canvas.getContext('2d').drawImage(v, 0, 0);
 
   canvas.toBlob(async (blob) => {
+    if (!blob) { showToast("Error al capturar imagen"); return; }
     currentBlob = blob;
     document.getElementById('result-photo').src = URL.createObjectURL(blob);
     const reader = new FileReader();
     reader.onloadend = () => callIA(reader.result.split(',')[1]);
     reader.readAsDataURL(blob);
-  }, 'image/jpeg', 0.85);
+  }, 'image/jpeg', 0.88);
 }
 
 async function callIA(base64) {
   document.getElementById('analyzing-overlay').classList.add('show');
   const key = localStorage.getItem('gemini_key');
-  // URL v1beta con modelo flash-lite (el que te funcionó)
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`;
 
   try {
@@ -180,93 +229,213 @@ async function callIA(base64) {
       body: JSON.stringify({
         contents: [{ parts: [
           { inline_data: { mime_type: 'image/jpeg', data: base64 } },
-          { text: "Identifica marca y producto. Responde solo el nombre en MAYÚSCULAS." }
-        ]}]
+          { text: `Eres un lector de etiquetas de productos de consumo en México.
+Extrae: marca, nombre del producto y presentación (gramaje/volumen).
+Responde SOLO JSON sin backticks: {"nombre":"MARCA PRODUCTO","presentacion":"GRAMAJE"}` }
+        ]}],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 150 }
       })
     });
 
     const data = await res.json();
-    const texto = data.candidates[0].content.parts[0].text;
-    document.getElementById('field-desc').value = texto.trim().toUpperCase();
+    if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
+
+    const raw = data.candidates[0].content.parts[0].text.replace(/```json|```/gi,'').trim();
+    let desc  = raw;
+    try {
+      const p = JSON.parse(raw);
+      desc    = `${p.nombre || ''} ${p.presentacion || ''}`.trim();
+    } catch { /* usar texto plano */ }
+
+    document.getElementById('field-desc').value = desc.toUpperCase();
     document.getElementById('analyzing-overlay').classList.remove('show');
     document.getElementById('result-view').classList.add('show');
   } catch (e) {
     document.getElementById('analyzing-overlay').classList.remove('show');
-    showToast("Error de lectura IA");
+    showToast("Error IA: " + e.message);
   }
 }
 
-// 5. FIREBASE GUARDADO
+/* ══════════════════════════════════════════════
+   GUARDAR EN FIREBASE
+══════════════════════════════════════════════ */
 async function saveData() {
-  const btn = document.getElementById('btn-save');
+  const btn    = document.getElementById('btn-save');
   const nombre = document.getElementById('field-desc').value.trim();
-  if(!nombre) return;
+  if (!nombre) { showToast("⚠️ Nombre vacío"); return; }
 
   btn.disabled = true; btn.innerText = "GUARDANDO...";
   try {
-    const path = `productos/${Date.now()}.jpg`;
-    const ref = storage.ref(path);
+    const path    = `productos/${Date.now()}.jpg`;
+    const ref     = storage.ref(path);
     await ref.put(currentBlob);
-    const url = await ref.getDownloadURL();
+    const fotoUrl = await ref.getDownloadURL();
 
     await db.collection("productos").add({
       nombre,
       nombre_busqueda: nombre.toLowerCase(),
-      precio_anaquel: parseFloat(document.getElementById('field-costo').value) || 0,
-      precio_venta: parseFloat(document.getElementById('field-venta').value) || 0,
-      foto: url,
-      creado: firebase.firestore.FieldValue.serverTimestamp()
+      precio_anaquel:  parseFloat(document.getElementById('field-costo').value) || 0,
+      precio_venta:    parseFloat(document.getElementById('field-venta').value) || 0,
+      foto:            fotoUrl,
+      creado:          firebase.firestore.FieldValue.serverTimestamp()
     });
-    showToast("✅ ¡GUARDADO!");
+
+    showToast("✅ ¡Guardado en Firebase!");
     closeResult();
-  } catch (e) { showToast("Error al guardar"); }
-  btn.disabled = false; btn.innerText = "GUARDAR EN FIREBASE";
+  } catch (e) {
+    showToast("Error Firebase: " + e.message);
+  } finally {
+    btn.disabled = false; btn.innerText = "GUARDAR EN FIREBASE";
+  }
 }
 
-// 6. BUSCADOR
+/* ══════════════════════════════════════════════
+   COMPARTIR — 2 NIVELES
+
+   NIVEL 1 — Web Share API con File (Android Chrome / iOS Safari 15+)
+   El sistema abre el selector nativo de apps y puedes elegir WhatsApp.
+   La imagen va adjunta directamente, sin pasos extra.
+
+   NIVEL 2 — Fallback: descarga imagen + abre WhatsApp con texto.
+   La imagen queda en la galería; el usuario la adjunta manualmente.
+   Funciona en cualquier navegador que no soporte Web Share con files.
+══════════════════════════════════════════════ */
+
+async function fetchBlob(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("No se pudo descargar la imagen");
+  return res.blob();
+}
+
+async function compartir(nombre, precio, fotoUrl) {
+  const texto = `🛒 *OFERTA RÁPIDA*\n📦 ${nombre}\n💲 Precio de venta: $${precio}`;
+
+  // ── NIVEL 1: Web Share API ──────────────────────────────────────
+  if (typeof navigator.canShare === 'function') {
+    try {
+      showToast("⏳ Preparando imagen...");
+      const blob = await fetchBlob(fotoUrl);
+      const file = new File([blob], `oferta_${Date.now()}.jpg`, { type: 'image/jpeg' });
+
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ title: 'Oferta Rápida', text: texto, files: [file] });
+        return; // éxito — salir
+      }
+    } catch (e) {
+      if (e.name === 'AbortError') return; // usuario canceló
+      console.warn("Web Share con imagen falló:", e.message);
+      // caer al nivel 2
+    }
+  }
+
+  // ── NIVEL 2: Descarga + WhatsApp ───────────────────────────────
+  await fallbackDescargar(nombre, precio, fotoUrl, texto);
+}
+
+async function fallbackDescargar(nombre, precio, fotoUrl, texto) {
+  try {
+    showToast("📥 Descargando imagen a tu galería...");
+    const blob    = await fetchBlob(fotoUrl);
+    const objUrl  = URL.createObjectURL(blob);
+    const a       = document.createElement('a');
+    a.href        = objUrl;
+    a.download    = `oferta_${nombre.replace(/\s+/g,'_')}_$${precio}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(objUrl), 3000);
+
+    // Pausa para que el sistema guarde el archivo antes de abrir WhatsApp
+    await new Promise(r => setTimeout(r, 1000));
+
+    const waMsg = encodeURIComponent(texto + '\n\n📎 _Adjunta la imagen que se acaba de guardar en tu galería_');
+    window.open(`https://wa.me/?text=${waMsg}`, '_blank');
+    showToast("✅ Imagen en galería · WhatsApp abierto");
+
+  } catch (e) {
+    // Último recurso: enviar solo el link público de Firebase Storage
+    console.warn("Descarga falló, enviando link:", e.message);
+    const waMsg = encodeURIComponent(`${texto}\n\n🖼 Ver imagen: ${fotoUrl}`);
+    window.open(`https://wa.me/?text=${waMsg}`, '_blank');
+    showToast("Se envió el enlace de la imagen");
+  }
+}
+
+/* ══════════════════════════════════════════════
+   BUSCADOR / INVENTARIO
+══════════════════════════════════════════════ */
 function openSearch() {
   document.getElementById('search-modal').style.display = 'flex';
   runSearch();
 }
-
 function closeSearch() { document.getElementById('search-modal').style.display = 'none'; }
 
 async function runSearch() {
-  const term = document.getElementById('search-input').value.toLowerCase();
-  const resContainer = document.getElementById('search-results');
-  resContainer.innerHTML = "";
+  const term      = document.getElementById('search-input').value.trim().toLowerCase();
+  const container = document.getElementById('search-results');
+  container.innerHTML = '<p style="color:var(--muted); font-size:11px; text-align:center;">Cargando...</p>';
 
-  let query = db.collection("productos").orderBy("creado", "desc").limit(20);
-  if (term) {
-    query = db.collection("productos").orderBy("nombre_busqueda").startAt(term).endAt(term + '\uf8ff');
-  }
+  try {
+    let query = db.collection("productos").orderBy("creado", "desc").limit(30);
+    if (term) {
+      query = db.collection("productos")
+        .orderBy("nombre_busqueda")
+        .startAt(term).endAt(term + '\uf8ff')
+        .limit(20);
+    }
 
-  const snap = await query.get();
-  snap.forEach(doc => {
-    const p = doc.data();
-    resContainer.innerHTML += `
-      <div class="search-card">
-        <img src="${p.foto}">
-        <div style="flex:1">
-          <div style="font-size:11px; font-weight:bold;">${p.nombre}</div>
-          <div style="color:var(--accent); font-size:10px;">Venta: $${p.precio_venta} | Anaquel: $${p.precio_anaquel}</div>
+    const snap = await query.get();
+    if (snap.empty) {
+      container.innerHTML = '<p style="color:var(--muted); font-size:11px; text-align:center;">Sin resultados</p>';
+      return;
+    }
+
+    container.innerHTML = '';
+    snap.forEach(doc => {
+      const p    = doc.data();
+      // Escapar comillas simples en el nombre para el onclick inline
+      const nEsc = (p.nombre || '').replace(/'/g, "\\'");
+      const fEsc = (p.foto   || '').replace(/'/g, "\\'");
+
+      const card = document.createElement('div');
+      card.className = 'search-card';
+      card.innerHTML = `
+        <img src="${p.foto}" alt="${p.nombre}"
+          onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22><rect width=%2260%22 height=%2260%22 fill=%22%232a2a45%22/></svg>'">
+        <div style="flex:1; overflow:hidden; min-width:0;">
+          <div style="font-size:11px; font-weight:bold; line-height:1.4; word-break:break-word;">${p.nombre}</div>
+          <div style="color:var(--accent); font-size:10px; margin-top:3px;">
+            Venta: $${p.precio_venta} &nbsp;|&nbsp; Anaquel: $${p.precio_anaquel}
+          </div>
         </div>
-        <button onclick="compartir('${p.nombre}', ${p.precio_venta}, '${p.foto}')" style="background:none; border:none; font-size:18px;">📲</button>
-      </div>`;
-  });
+        <button class="share-btn-inv" onclick="compartir('${nEsc}', ${p.precio_venta}, '${fEsc}')">
+          📲<br>ENVIAR
+        </button>`;
+      container.appendChild(card);
+    });
+
+  } catch (e) {
+    container.innerHTML = `<p style="color:#ff4466; font-size:11px; text-align:center;">Error: ${e.message}</p>`;
+  }
 }
 
-function compartir(n, v, f) {
-  const msg = `*OFERTA RÁPIDA*%0A*Producto:* ${n}%0A*Precio:* $${v}%0A*Foto:* ${f}`;
-  window.open(`https://wa.me/?text=${msg}`, '_blank');
-}
-
+/* ══════════════════════════════════════════════
+   UTILIDADES
+══════════════════════════════════════════════ */
 function showToast(m) {
-  const t = document.getElementById('toast'); t.innerText = m; t.style.display = 'block';
-  setTimeout(() => t.style.display = 'none', 4000);
+  const t = document.getElementById('toast');
+  t.innerText = m; t.style.display = 'block';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.style.display = 'none', 4500);
 }
 
-function closeResult() { document.getElementById('result-view').classList.remove('show'); }
+function closeResult() {
+  document.getElementById('result-view').classList.remove('show');
+  document.getElementById('field-desc').value  = '';
+  document.getElementById('field-costo').value = '';
+  document.getElementById('field-venta').value = '';
+  currentBlob = null;
+}
 </script>
 </body>
 </html>
