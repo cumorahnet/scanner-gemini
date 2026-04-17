@@ -3,45 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Scanner Pro — Antonio Hernandez</title>
+<title>Scanner Pro — Yautepec</title>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 
 <style>
-  :root {
-    --bg: #0a0a0f; --surface: #13131c; --border: #2a2a45;
-    --accent: #00e5c0; --text: #e8e8f0; --muted: #6b6b8a;
-  }
+  :root { --bg: #0a0a0f; --surface: #13131c; --border: #2a2a45; --accent: #00e5c0; --text: #e8e8f0; }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:var(--bg); color:var(--text); font-family:monospace; }
-
+  body { background:var(--bg); color:var(--text); font-family:monospace; overflow: hidden; }
   #lens-view, #result-view, #analyzing-overlay { position: fixed; inset: 0; }
   #lens-view { background: #000; display: flex; flex-direction: column; z-index: 10; }
   #camera-feed { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  
-  .ui-top { position: relative; z-index: 20; padding: 50px 20px; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); display: flex; justify-content: space-between; }
-  .ui-bottom { position: absolute; bottom: 0; left: 0; right: 0; z-index: 20; padding: 40px; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); display: flex; justify-content: center; }
-  
+  .ui-top { position: relative; z-index: 20; padding: 50px 20px; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); display: flex; justify-content: space-between; align-items: center; }
+  .ui-bottom { position: absolute; bottom: 0; left: 0; right: 0; z-index: 20; padding: 40px 20px; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); display: flex; flex-direction: column; align-items: center; }
   .btn-capture { width: 80px; height: 80px; border-radius: 50%; border: 5px solid #fff; background: rgba(255,255,255,0.2); cursor: pointer; }
-  .btn { padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; font-family: monospace; }
-  .btn-primary { background: var(--accent); color: #000; width: 100%; }
-  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
-
   #result-view { background: var(--bg); z-index: 50; display: none; flex-direction: column; overflow-y: auto; }
   #result-view.show { display: flex; }
   .result-photo { width: 100%; height: 250px; object-fit: cover; border-bottom: 2px solid var(--accent); }
   .result-body { padding: 20px; }
-  
-  .input-f { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; color: #fff; margin-bottom: 15px; font-family: monospace; outline: none; }
-  .input-f:focus { border-color: var(--accent); }
-
-  #analyzing-overlay { background: rgba(0,0,0,0.9); z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; }
+  .input-f { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; color: #fff; margin-bottom: 15px; font-family: monospace; }
+  .btn { padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; font-family: monospace; width: 100%; margin-top: 10px; }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  #analyzing-overlay { background: rgba(0,0,0,0.85); z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; }
   #analyzing-overlay.show { display: flex; }
   .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-
-  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c1c2e; border: 1px solid var(--accent); padding: 10px 20px; border-radius: 8px; display: none; z-index: 1000; font-size: 12px; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c1c2e; border: 1px solid var(--accent); padding: 12px; border-radius: 8px; display: none; z-index: 1000; font-size: 11px; max-width: 80%; }
 </style>
 </head>
 <body>
@@ -50,7 +39,7 @@
   <video id="camera-feed" autoplay playsinline muted></video>
   <div class="ui-top">
     <div style="font-weight: bold; color: var(--accent);">SCANNER PRO</div>
-    <button class="btn btn-outline" onclick="openSearch()">🔍 INVENTARIO</button>
+    <button class="btn-outline" onclick="openSearch()" style="width: auto; padding: 5px 10px;">🔍 INVENTARIO</button>
   </div>
   <div class="ui-bottom">
     <button class="btn-capture" onclick="captureAndAnalyze()"></button>
@@ -60,42 +49,26 @@
 <div id="result-view">
   <img id="result-photo" class="result-photo">
   <div class="result-body">
-    <label style="font-size: 10px; color: var(--muted); letter-spacing: 1px;">PRODUCTO LEYIDO</label>
+    <label style="font-size: 10px; color: #6b6b8a;">PRODUCTO</label>
     <textarea id="field-desc" class="input-f" rows="2"></textarea>
-    
     <div style="display: flex; gap: 10px;">
-      <div style="flex: 1;">
-        <label style="font-size: 10px; color: var(--muted);">P. ANAQUEL $</label>
-        <input type="number" id="field-costo" class="input-f" placeholder="0.00">
-      </div>
-      <div style="flex: 1;">
-        <label style="font-size: 10px; color: var(--muted);">P. VENTA $</label>
-        <input type="number" id="field-venta" class="input-f" placeholder="0.00">
-      </div>
+      <div style="flex: 1;"><label style="font-size: 10px; color: #6b6b8a;">ANAQUEL $</label><input type="number" id="field-costo" class="input-f"></div>
+      <div style="flex: 1;"><label style="font-size: 10px; color: #6b6b8a;">VENTA $</label><input type="number" id="field-venta" class="input-f"></div>
     </div>
-    
-    <button class="btn btn-primary" id="btn-save" onclick="saveToFirebase()">GUARDAR EN FIREBASE</button>
-    <button class="btn btn-outline" onclick="closeResult()" style="width: 100%; margin-top: 10px;">CANCELAR</button>
+    <button class="btn btn-primary" id="btn-save" onclick="saveData()">GUARDAR PRODUCTO</button>
+    <button class="btn btn-outline" onclick="closeResult()">CANCELAR</button>
   </div>
 </div>
 
 <div id="analyzing-overlay">
   <div class="spinner"></div>
-  <p style="margin-top: 15px; color: var(--accent);">GEMINI ANALIZANDO...</p>
-</div>
-
-<div id="search-modal" style="display:none; position:fixed; inset:0; background:var(--bg); z-index:200; padding:20px; overflow-y:auto;">
-  <h3>Buscar Producto</h3>
-  <input type="text" id="search-input" class="input-f" placeholder="Nombre...">
-  <button class="btn btn-primary" onclick="runSearch()">CONSULTAR</button>
-  <div id="search-results" style="margin-top:20px;"></div>
-  <button class="btn btn-outline" onclick="document.getElementById('search-modal').style.display='none'" style="width:100%; margin-top:20px;">CERRAR</button>
+  <p style="margin-top: 15px; font-size: 12px;">GEMINI ANALIZANDO...</p>
 </div>
 
 <div id="toast" class="toast"></div>
 
 <script>
-// 1. CONFIGURACIÓN FIREBASE
+// CONFIGURACIÓN FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyB3kiLskvkV6cJ0byaCg_zqe-GIWM3jelI",
   authDomain: "ofertas-rapidas-con-scanner.firebaseapp.com",
@@ -108,15 +81,13 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const storage = firebase.storage();
+let currentBlob = null;
 
-let capturedBlob = null;
-
-// Iniciar
 window.onload = () => {
-  const key = localStorage.getItem('scanner_gemini_key');
-  if (!key) {
+  let key = localStorage.getItem('gemini_key');
+  if (!key || key.length < 10) {
     const n = prompt("Pega tu API Key de Gemini (AIza...):");
-    if (n) localStorage.setItem('scanner_gemini_key', n);
+    if (n) localStorage.setItem('gemini_key', n);
   }
   startCamera();
 };
@@ -125,18 +96,17 @@ async function startCamera() {
   try {
     const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
     document.getElementById('camera-feed').srcObject = s;
-  } catch(e) { showToast("Error de cámara"); }
+  } catch (e) { showToast("Error de cámara"); }
 }
 
 async function captureAndAnalyze() {
-  const video = document.getElementById('camera-feed');
-  const canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-  canvas.getContext('2d').drawImage(video, 0, 0);
-  
-  canvas.toBlob(async (blob) => {
-    capturedBlob = blob;
-    document.getElementById('analyzing-overlay').classList.add('show');
+  const v = document.getElementById('camera-feed');
+  const c = document.createElement('canvas');
+  c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext('2d').drawImage(v, 0, 0);
+  c.toBlob(async (blob) => {
+    currentBlob = blob;
+    document.getElementById('result-photo').src = URL.createObjectURL(blob);
     const reader = new FileReader();
     reader.onloadend = () => callIA(reader.result.split(',')[1]);
     reader.readAsDataURL(blob);
@@ -144,101 +114,62 @@ async function captureAndAnalyze() {
 }
 
 async function callIA(base64) {
-  const key = localStorage.getItem('scanner_gemini_key');
-  const promptText = 'Identifica marca y producto. Responde solo el nombre en formato JSON: {"resultado":"nombre"}';
+  document.getElementById('analyzing-overlay').classList.add('show');
+  const key = localStorage.getItem('gemini_key');
   
+  // CORRECCIÓN DE URL: Usamos v1 en lugar de v1beta
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
+
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+    const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ inline_data: { mime_type: 'image/jpeg', data: base64 } }, { text: promptText }] }]
+        contents: [{ parts: [{ inline_data: { mime_type: 'image/jpeg', data: base64 } }, { text: 'Identifica marca y producto. Responde solo el nombre corto.' }] }]
       })
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error.message);
+    if (!res.ok) throw new Error(data.error ? data.error.message : "Error API");
 
-    let text = data.candidates[0].content.parts[0].text;
-    
-    // LIMPIEZA DE LECTURA
-    text = text.replace(/```json|```/g, '').trim();
-    
-    try {
-      const json = JSON.parse(text);
-      document.getElementById('field-desc').value = json.resultado || text;
-    } catch(e) {
-      document.getElementById('field-desc').value = text;
-    }
-
-    document.getElementById('result-photo').src = URL.createObjectURL(capturedBlob);
+    const texto = data.candidates[0].content.parts[0].text;
+    document.getElementById('field-desc').value = texto.trim();
     document.getElementById('analyzing-overlay').classList.remove('show');
     document.getElementById('result-view').classList.add('show');
-  } catch(e) {
+  } catch (e) {
     document.getElementById('analyzing-overlay').classList.remove('show');
     showToast("Error de lectura IA: " + e.message);
   }
 }
 
-async function saveToFirebase() {
+async function saveData() {
   const btn = document.getElementById('btn-save');
   btn.disabled = true; btn.innerText = "GUARDANDO...";
-  const nombre = document.getElementById('field-desc').value;
-
   try {
-    // 1. Subir a Storage
-    const path = `productos/${Date.now()}.jpg`;
+    const path = `fotos/${Date.now()}.jpg`;
     const ref = storage.ref(path);
-    await ref.put(capturedBlob);
+    await ref.put(currentBlob);
     const url = await ref.getDownloadURL();
-
-    // 2. Guardar en Firestore
     await db.collection("productos").add({
-      nombre: nombre,
-      nombre_min: nombre.toLowerCase(),
-      precio_anaquel: parseFloat(document.getElementById('field-costo').value) || 0,
-      precio_venta: parseFloat(document.getElementById('field-venta').value) || 0,
+      nombre: document.getElementById('field-desc').value,
+      nombre_min: document.getElementById('field-desc').value.toLowerCase(),
+      anaquel: parseFloat(document.getElementById('field-costo').value) || 0,
+      venta: parseFloat(document.getElementById('field-venta').value) || 0,
       foto: url,
-      fecha: firebase.firestore.FieldValue.serverTimestamp()
+      creado: firebase.firestore.FieldValue.serverTimestamp()
     });
-
-    showToast("¡Producto Guardado!");
+    alert("¡Producto guardado!");
     closeResult();
-  } catch(e) { showToast("Error al guardar"); }
-  btn.disabled = false; btn.innerText = "GUARDAR EN FIREBASE";
+  } catch (e) { showToast("Error Firebase: " + e.message); }
+  btn.disabled = false; btn.innerText = "GUARDAR PRODUCTO";
 }
 
-// Búsqueda para el programa de ventas
-async function runSearch() {
-  const term = document.getElementById('search-input').value.toLowerCase();
-  const res = document.getElementById('search-results');
-  res.innerHTML = "Buscando...";
-  const snap = await db.collection("productos").where("nombre_min", ">=", term).where("nombre_min", "<=", term + "\uf8ff").get();
-  res.innerHTML = "";
-  snap.forEach(doc => {
-    const p = doc.data();
-    res.innerHTML += `<div style="background:var(--surface); padding:10px; margin-bottom:10px; border-radius:8px; display:flex; align-items:center; gap:10px;">
-      <img src="${p.foto}" style="width:50px; height:50px; object-fit:cover; border-radius:5px;">
-      <div style="flex:1">
-        <div style="font-size:14px;">${p.nombre}</div>
-        <div style="color:var(--accent); font-size:12px;">Venta: $${p.precio_venta}</div>
-      </div>
-      <button onclick="compartir('${p.nombre}', ${p.precio_venta}, '${p.foto}')" style="background:none; border:none; font-size:20px;">📲</button>
-    </div>`;
-  });
-}
-
-function compartir(n, v, f) {
-  const msg = `*Producto:* ${n}%0A*Precio:* $${v}%0A*Foto:* ${f}`;
-  window.open(`https://wa.me/?text=${msg}`, '_blank');
-}
-
-function closeResult() { document.getElementById('result-view').classList.remove('show'); }
-function openSearch() { document.getElementById('search-modal').style.display = 'block'; }
 function showToast(m) {
   const t = document.getElementById('toast'); t.innerText = m; t.style.display = 'block';
-  setTimeout(() => t.style.display = 'none', 3500);
+  setTimeout(() => t.style.display = 'none', 5000);
 }
+function closeResult() { document.getElementById('result-view').classList.remove('show'); }
+function openSearch() { alert("Buscador próximamente..."); }
 </script>
 </body>
 </html>
