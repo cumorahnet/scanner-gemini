@@ -22,16 +22,47 @@
         #cam-preview-ia { width: 100%; height: 100%; object-fit: cover; }
         .scan-frame { width: 80%; height: 35%; border: 2px solid #00e5c0; border-radius: 20px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 0 4000px rgba(0,0,0,0.7); pointer-events: none; }
         #key-config-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 25000; display: none; align-items: center; justify-content: center; padding: 20px; }
+
+        /* ── Panel de precios post-escaneo (reemplaza los prompt bloqueados) ── */
+        #price-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 20000; display: none; align-items: flex-end; justify-content: center; padding: 20px; }
+        #price-panel { background: white; border-radius: 24px 24px 16px 16px; padding: 24px; width: 100%; max-width: 400px; }
+        #price-panel h6 { font-weight: 900; font-size: 0.85rem; color: #0f172a; margin-bottom: 4px; }
+        #price-nombre { font-size: 0.75rem; color: #64748b; margin-bottom: 16px; word-break: break-word; }
     </style>
 </head>
 <body>
 
+    <!-- Modal API Key -->
     <div id="key-config-modal">
         <div class="card-custom w-100" style="max-width: 350px; text-align: center;">
             <h6 class="fw-bold mb-3">ACTIVAR ESCÁNER</h6>
-            <p style="font-size: 0.7rem;" class="text-muted">Pega tu API Key.<br>Esto protege tu llave de los bloqueos de GitHub.</p>
-            <input type="text" id="user-gemini-key" class="form-control mb-3" placeholder="Pega aquí la clave...">
+            <p style="font-size: 0.7rem;" class="text-muted">Pega tu API Key de Gemini.<br>Se guarda solo en este dispositivo.</p>
+            <input type="text" id="user-gemini-key" class="form-control mb-3" placeholder="AIzaSy...">
             <button class="btn btn-primary w-100 rounded-pill fw-bold" onclick="saveKey()">ACTIVAR</button>
+        </div>
+    </div>
+
+    <!-- Modal precios — reemplaza los prompt() bloqueados en móvil -->
+    <div id="price-modal">
+        <div id="price-panel">
+            <h6>PRODUCTO ESCANEADO</h6>
+            <div id="price-nombre"></div>
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <label class="small fw-bold text-muted">PRECIO VENTA $</label>
+                    <input type="number" id="pm-venta" class="form-control" placeholder="0.00" step="0.01">
+                </div>
+                <div class="col-6">
+                    <label class="small fw-bold text-muted">COSTO ANAQUEL $</label>
+                    <input type="number" id="pm-costo" class="form-control" placeholder="0.00" step="0.01">
+                </div>
+            </div>
+            <button class="btn btn-success w-100 py-3 rounded-pill fw-bold mb-2" onclick="confirmPrices()">
+                📲 COMPARTIR Y GUARDAR
+            </button>
+            <button class="btn btn-outline-secondary w-100 rounded-pill border-0" onclick="cancelPrices()">
+                CANCELAR
+            </button>
         </div>
     </div>
 
@@ -85,10 +116,13 @@
         const db = firebase.firestore();
         let state = { products: [], clients: [], stores: [] };
         let stream = null;
+        let pendingNombre = '';   // guarda el nombre escaneado mientras el usuario digita precios
+        let pendingCanvas = null; // guarda el canvas para el share
 
         function saveKey() {
             const val = document.getElementById('user-gemini-key').value.trim();
-            if(val) { localStorage.setItem('yaute_key_v3310', val); location.reload(); }
+            if(val && val.length > 10) { localStorage.setItem('yaute_key_v3310', val); location.reload(); }
+            else alert("La key parece inválida, verifica.");
         }
 
         function startSync() {
@@ -133,55 +167,129 @@
         async function openScanner() {
             document.getElementById('home-selector').style.display = 'none';
             document.getElementById('ia-modal').style.display = 'flex';
-            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-            document.getElementById('cam-preview-ia').srcObject = stream;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1920 } } });
+                document.getElementById('cam-preview-ia').srcObject = stream;
+            } catch(e) {
+                alert("Error de cámara: " + e.message);
+                closeScanner();
+            }
         }
 
         function closeScanner() {
             if(stream) stream.getTracks().forEach(t => t.stop());
+            stream = null;
             document.getElementById('ia-modal').style.display = 'none';
             document.getElementById('home-selector').style.display = 'flex';
         }
 
+        /* ══════════════════════════════════════════════════════
+           captureIA — CORRECCIONES:
+           1. Modelo: gemini-2.5-flash-lite en v1beta (no gemini-1.5-flash en v1)
+           2. Header Content-Type añadido (evita errores 400)
+           3. prompt() reemplazado por panel #price-modal
+           4. catch ya NO borra la key (solo muestra el error)
+        ══════════════════════════════════════════════════════ */
         async function captureIA() {
             const key = localStorage.getItem('yaute_key_v3310');
             const video = document.getElementById('cam-preview-ia');
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            const b64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
-            
-            document.getElementById('snap-btn').innerHTML = '<i class="fas fa-spinner fa-spin text-primary"></i>';
+
+            if(!video.srcObject || video.videoWidth === 0) {
+                alert("Cámara no lista, espera un momento.");
+                return;
+            }
+
+            // Guardar canvas para reutilizarlo en confirmPrices()
+            pendingCanvas = document.createElement('canvas');
+            pendingCanvas.width  = video.videoWidth;
+            pendingCanvas.height = video.videoHeight;
+            pendingCanvas.getContext('2d').drawImage(video, 0, 0);
+            const b64 = pendingCanvas.toDataURL('image/jpeg', 0.88).split(',')[1];
+
+            // Mostrar spinner en el botón
+            const snapBtn = document.getElementById('snap-btn');
+            snapBtn.innerHTML = '<i class="fas fa-spinner fa-spin text-primary fa-2x"></i>';
+            snapBtn.disabled  = true;
 
             try {
-                // CAMBIO MAESTRO: Usamos la ruta v1 estable (no v1beta) para máxima compatibilidad con llaves AQ
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ contents: [{ parts: [{ inline_data: { mime_type: 'image/jpeg', data: b64 } }, { text: "MARCA Y PRODUCTO. MAYÚSCULAS." }] }] })
-                });
-                
+                // FIX #1: modelo correcto + endpoint v1beta
+                const res = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }, // FIX #2
+                        body: JSON.stringify({
+                            contents: [{ parts: [
+                                { inline_data: { mime_type: 'image/jpeg', data: b64 } },
+                                { text: "Identifica marca y nombre del producto en la etiqueta. Responde SOLO el nombre en MAYÚSCULAS, sin explicaciones." }
+                            ]}],
+                            generationConfig: { temperature: 0.1, maxOutputTokens: 100 }
+                        })
+                    }
+                );
+
                 const data = await res.json();
-                if(data.error) throw new Error(data.error.message);
+                if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
 
-                const nombre = data.candidates[0].content.parts[0].text.trim();
-                const existe = state.products.find(p => p.nombre.toUpperCase() === nombre.toUpperCase());
-                
-                const v = prompt("PRECIO VENTA:", existe ? existe.precio : "");
-                const a = prompt("PRECIO COSTO:", existe ? existe.costo : "");
+                pendingNombre = data.candidates[0].content.parts[0].text.trim().toUpperCase();
 
-                if(v) {
-                    const blob = await (await fetch(canvas.toDataURL('image/jpeg'))).blob();
-                    const f = new File([blob], 'oferta.jpg', { type: 'image/jpeg' });
-                    if(navigator.share) await navigator.share({ files: [f], text: `🛒 *OFERTA*\n📦 ${nombre}\n💰 $${v}` });
-                    if(!existe) db.collection('artifacts/yaute-v1-shared/public/data/products').add({ nombre, costo: parseFloat(a)||0, precio: parseFloat(v) });
-                    location.reload();
-                }
-            } catch(e) { 
-                alert("ERROR: " + e.message); 
-                localStorage.removeItem('yaute_key_v3310');
-                location.reload();
+                // FIX #3: mostrar panel en lugar de prompt()
+                const existe = state.products.find(p => p.nombre.toUpperCase() === pendingNombre);
+                document.getElementById('price-nombre').textContent = pendingNombre;
+                document.getElementById('pm-venta').value = existe ? existe.precio : '';
+                document.getElementById('pm-costo').value = existe ? existe.costo  : '';
+                document.getElementById('price-modal').style.display = 'flex';
+
+            } catch(e) {
+                // FIX #4: NO borrar la key — puede ser un error de red puntual
+                alert("Error al analizar: " + e.message);
+            } finally {
+                snapBtn.innerHTML = '<i class="fas fa-camera fa-2x text-primary"></i>';
+                snapBtn.disabled  = false;
             }
+        }
+
+        /* Confirmación de precios desde el panel */
+        async function confirmPrices() {
+            const venta  = parseFloat(document.getElementById('pm-venta').value) || 0;
+            const costo  = parseFloat(document.getElementById('pm-costo').value) || 0;
+            const nombre = pendingNombre;
+
+            document.getElementById('price-modal').style.display = 'none';
+
+            // Compartir con Web Share API (imagen adjunta)
+            if (pendingCanvas && navigator.canShare) {
+                try {
+                    const blob = await new Promise(r => pendingCanvas.toBlob(r, 'image/jpeg', 0.88));
+                    const file = new File([blob], 'oferta.jpg', { type: 'image/jpeg' });
+                    if (navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            text: `🛒 *OFERTA RÁPIDA*\n📦 ${nombre}\n💰 $${venta}`
+                        });
+                    }
+                } catch(e) {
+                    if (e.name !== 'AbortError') console.warn("Share:", e.message);
+                }
+            }
+
+            // Guardar en Firebase
+            const existe = state.products.find(p => p.nombre.toUpperCase() === nombre);
+            if (!existe) {
+                db.collection('artifacts/yaute-v1-shared/public/data/products')
+                  .add({ nombre, costo, precio: venta });
+            } else {
+                db.collection('artifacts/yaute-v1-shared/public/data/products')
+                  .doc(existe.id).update({ costo, precio: venta });
+            }
+
+            closeScanner();
+        }
+
+        function cancelPrices() {
+            document.getElementById('price-modal').style.display = 'none';
+            pendingNombre = '';
+            pendingCanvas = null;
         }
 
         function showTab(id) {
@@ -190,14 +298,18 @@
         }
 
         async function saveRecord() {
-            const t = document.getElementById('in-tienda').value.toUpperCase();
-            const c = document.getElementById('in-cliente').value.toUpperCase();
-            const p = document.getElementById('in-producto').value.toUpperCase();
-            const q = parseInt(document.getElementById('in-cantidad').value);
+            const t  = document.getElementById('in-tienda').value.toUpperCase();
+            const c  = document.getElementById('in-cliente').value.toUpperCase();
+            const p  = document.getElementById('in-producto').value.toUpperCase();
+            const q  = parseInt(document.getElementById('in-cantidad').value);
             const co = parseFloat(document.getElementById('in-costo').value);
             const pr = parseFloat(document.getElementById('in-precio').value);
             if(!t || !c || !p) return alert("Faltan datos");
-            await db.collection('artifacts/yaute-v1-shared/public/data/sales').add({ tienda: t, cliente: c, producto: p, cantidad: q, costo: co, precio: pr, total: q*pr, fechaStr: new Date().toLocaleDateString(), timestamp: Date.now() });
+            await db.collection('artifacts/yaute-v1-shared/public/data/sales').add({
+                tienda: t, cliente: c, producto: p, cantidad: q,
+                costo: co, precio: pr, total: q * pr,
+                fechaStr: new Date().toLocaleDateString(), timestamp: Date.now()
+            });
             alert("Guardado ✅");
             location.reload();
         }
