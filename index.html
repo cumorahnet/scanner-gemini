@@ -444,24 +444,46 @@ const toastScanner = (msg, color = '#10b981') => {
 /* ══════════════════════════════════════════════════════════════════
    SYNC FIREBASE
 ══════════════════════════════════════════════════════════════════ */
+function hideSplash() {
+    const splash = document.getElementById('splash-screen');
+    if (splash) { splash.style.opacity = '0'; setTimeout(() => { if(splash.parentNode) splash.remove(); }, 500); }
+}
+
 function startSync() {
     // Verificar API key Gemini
     if (!localStorage.getItem('yaute_key_v3310')) {
         document.getElementById('key-config-modal').style.display = 'flex';
     }
 
+    // ── Timeout de seguridad: quita el splash pase lo que pase ──
+    // Si Firebase tarda más de 5s (sin conexión, permisos, etc.)
+    // el splash desaparece de todas formas y la app es usable.
+    const splashTimeout = setTimeout(hideSplash, 5000);
+
+    let colsReady = 0;
+    const TOTAL_COLS = 4;
+
     ['sales', 'clients', 'stores', 'products'].forEach(name => {
         col(name).onSnapshot(snap => {
             window.state[name] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             document.getElementById('status-dot').style.background = 'var(--success)';
             document.getElementById('status-dot').style.boxShadow  = '0 0 10px var(--success)';
-            const splash = document.getElementById('splash-screen');
-            if (splash) { splash.style.opacity = '0'; setTimeout(() => splash.remove(), 500); }
+
+            // Quitar splash cuando la primera colección responda
+            colsReady++;
+            if (colsReady === 1) {
+                clearTimeout(splashTimeout);
+                hideSplash();
+            }
+
             if (name === 'sales') { renderEntregas(); if (activeSubTab === 'finanzas') renderFinanceMenu(); }
             if (name !== 'sales' && activeSubTab === 'catalogo') renderControlList();
         }, err => {
             console.error('Sync:', name, err.message);
             document.getElementById('status-dot').style.background = '#ef4444';
+            // Si todas fallaron, quitar splash también
+            colsReady++;
+            if (colsReady === 1) { clearTimeout(splashTimeout); hideSplash(); }
         });
     });
 
