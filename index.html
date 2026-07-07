@@ -3,161 +3,308 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Escáner de Productos Simple</title>
-    <link rel="icon" href="logo.png">
-
+    <title>Escáner de Imágenes</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-    <!-- Firebase unificada: ofertas-rapidas-con-scanner (cuenta personal Antonio) -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-
     <style>
         :root {
-            --primary: #0f172a; --accent: #3b82f6; --success: #10b981;
-            --danger: #ef4444; --warning: #f59e0b; --bg: #f8fafc;
-            --card-radius: 20px; --shadow: 0 4px 20px rgba(15,23,42,0.08);
+            --primary: #0f172a;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg: #f8fafc;
         }
-        html, body { height:100%; margin:0; padding:0; background:var(--bg); }
-        body { display:flex; flex-direction:column; font-family:'Inter',system-ui,sans-serif; color:#1e293b; }
-        
-        .card-custom { background:white; border-radius:var(--card-radius); padding:20px; margin-bottom:15px; border:1px solid #f1f5f9; box-shadow:var(--shadow); position:relative; }
-        .form-control, .form-select { padding:0.8rem 1rem; font-size:0.95rem; border-radius:14px; border:2px solid #f1f5f9; background:#fff; color:var(--primary); }
-        .form-control:focus { border-color:var(--accent); box-shadow:0 0 0 4px rgba(59,130,246,0.1); outline:none; }
-        label.text-uppercase { font-size:0.65rem; margin-bottom:4px; font-weight:800; color:#94a3b8; display:block; letter-spacing:0.5px; }
 
-        /* MODALES */
-        .modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,0.85); z-index:8000; display:none; align-items:center; justify-content:center; backdrop-filter:blur(8px); padding:20px; }
-        .modal-content-custom { background:white; width:100%; max-width:420px; border-radius:28px; padding:25px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); }
-
-        /* ══ SCANNER MODAL ══ */
-        #ia-modal { position:fixed; inset:0; background:#000; z-index:10000; display:none; flex-direction:column; }
-        #cam-preview-ia { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
-        .scan-guide { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:82%; aspect-ratio:4/3; border:2px solid rgba(0,229,192,0.6); border-radius:16px; pointer-events:none; }
-        .scan-guide::before, .scan-guide::after { content:''; position:absolute; width:22px; height:22px; border-color:#00e5c0; border-style:solid; }
-        .scan-guide::before { top:-2px; left:-2px; border-width:3px 0 0 3px; border-radius:4px 0 0 0; }
-        .scan-guide::after  { bottom:-2px; right:-2px; border-width:0 3px 3px 0; border-radius:0 0 4px 0; }
-        #cam-top-bar { position:absolute; top:0; left:0; right:0; z-index:20; padding:40px 18px 20px; background:linear-gradient(to bottom,rgba(0,0,0,0.55),transparent); display:flex; justify-content:space-between; align-items:center; }
-        #snap-btn { position:absolute; bottom:35px; left:50%; transform:translateX(-50%); width:72px; height:72px; border-radius:50%; background:white; border:5px solid rgba(255,255,255,0.4); display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:20; box-shadow:0 6px 20px rgba(0,0,0,0.4); }
-
-        /* Panel resultado scanner */
-        #price-modal { position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:20000; display:none; align-items:flex-end; justify-content:center; padding:16px; }
-        #price-panel { background:white; border-radius:24px; padding:22px; width:100%; max-width:420px; }
-        .badge-dup { background:#fef3c7; border:1px solid #fbbf24; color:#92400e; border-radius:10px; padding:10px 12px; font-size:0.72rem; font-weight:700; margin-bottom:14px; display:none; gap:8px; align-items:flex-start; }
-        .badge-dup.show { display:flex; }
-
-        /* Modal API Key scanner */
-        #key-config-modal { position:fixed; inset:0; background:rgba(0,0,0,0.98); z-index:25000; display:none; align-items:center; justify-content:center; padding:20px; }
-
-        /* Modal confirmación duplicado */
-        #dup-confirm-modal {position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:21000; display:none; align-items:flex-end; justify-content:center; padding:16px;}
-
-        .toast-msg { position:fixed; top:22px; left:50%; transform:translateX(-50%); z-index:30000; padding:12px 24px; border-radius:50px; font-weight:800; font-size:0.8rem; display:none; color:white; box-shadow:0 8px 24px rgba(0,0,0,0.25); max-width:88%; text-align:center; }
-
-        .dup-candidate {
-            background:#f8fafc; border:2px solid #e2e8f0; border-radius:12px; padding:12px 14px; margin-bottom:8px; cursor:pointer;
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background: var(--bg);
+            font-family: 'Inter', system-ui, sans-serif;
         }
-        .dup-candidate:hover {
-            background:#f1f5f9; border-color:var(--accent);
+
+        body {
+            display: flex;
+            flex-direction: column;
         }
-        .dup-candidate .text-primary { color:var(--accent); }
+
+        .container-main {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .card-custom {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid #f1f5f9;
+            box-shadow: 0 4px 20px rgba(15,23,42,0.08);
+        }
+
+        .form-control, .form-select {
+            padding: 0.8rem 1rem;
+            font-size: 0.95rem;
+            border-radius: 14px;
+            border: 2px solid #f1f5f9;
+            background: #fff;
+            color: var(--primary);
+        }
+
+        .form-control:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(59,130,246,0.1);
+            outline: none;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            border: none;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success);
+            border: none;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            color: white;
+        }
+
+        .btn-outline-secondary {
+            border: 1px solid #e2e8f0;
+            color: var(--primary);
+        }
+
+        .btn-outline-secondary:hover {
+            background: #f1f5f9;
+        }
+
+        #output-area {
+            background: #f1f5f9;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 15px;
+            min-height: 120px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #0f172a;
+        }
+
+        #output-area.empty {
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        .scan-result-item {
+            background: white;
+            border-left: 4px solid var(--accent);
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        /* SCANNER MODAL */
+        #ia-modal {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+        }
+
+        #cam-preview-ia {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .scan-guide {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+            width: 82%;
+            aspect-ratio: 4/3;
+            border: 2px solid rgba(0,229,192,0.6);
+            border-radius: 16px;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .scan-guide::before, .scan-guide::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            border-color: #00e5c0;
+            border-style: solid;
+        }
+
+        .scan-guide::before {
+            top: -2px;
+            left: -2px;
+            border-width: 3px 0 0 3px;
+            border-radius: 4px 0 0 0;
+        }
+
+        .scan-guide::after {
+            bottom: -2px;
+            right: -2px;
+            border-width: 0 3px 3px 0;
+            border-radius: 0 0 4px 0;
+        }
+
+        #cam-top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 20;
+            padding: 40px 18px 20px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.55), transparent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #snap-btn {
+            position: absolute;
+            bottom: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: white;
+            border: 5px solid rgba(255,255,255,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+
+        #snap-btn:hover {
+            background: #f0f0f0;
+        }
+
+        /* RESULT MODAL */
+        #result-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            z-index: 20000;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        #result-panel {
+            background: white;
+            border-radius: 24px;
+            padding: 22px;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .toast-msg {
+            position: fixed;
+            top: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 30000;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            display: none;
+            color: white;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+            max-width: 88%;
+            text-align: center;
+        }
+
+        /* API KEY MODAL */
+        #key-config-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.98);
+            z-index: 25000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        label.text-uppercase {
+            font-size: 0.65rem;
+            margin-bottom: 4px;
+            font-weight: 800;
+            color: #94a3b8;
+            display: block;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
 
 <div id="toast-msg" class="toast-msg"></div>
 
-<!-- ══ MODAL API KEY GEMINI ══════════════════════════════════════ -->
+<!-- API KEY MODAL -->
 <div id="key-config-modal">
-    <div class="card-custom w-100" style="max-width:350px; text-align:center;">
-        <h6 class="fw-bold mb-3">⚙ ACTIVAR ESCÁNER IA</h6>
+    <div class="card-custom" style="max-width:350px; text-align:center;">
+        <h6 class="fw-bold mb-3">⚙ CONFIGURAR ESCÁNER</h6>
         <p style="font-size:0.7rem;" class="text-muted mb-3">
-            Pega tu API Key de Gemini.<br>Se guarda solo en este dispositivo.<br><br>
+            Ingresa tu API Key de Google Gemini.<br>Se guarda solo en este dispositivo.<br><br>
             Obtén la tuya gratis en<br>
-            <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent);">aistudio.google.com</a>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent);">aistudio.google.com/app/apikey</a>
         </p>
         <input type="password" id="user-gemini-key" class="form-control mb-3" placeholder="AIzaSy...">
-        <button class="btn btn-primary w-100 rounded-pill fw-bold" onclick="saveGeminiKey()">ACTIVAR</button>
+        <button class="btn btn-primary w-100 rounded-pill fw-bold" onclick="saveGeminiKey()">GUARDAR KEY</button>
     </div>
 </div>
 
-<!-- ══ MODAL PRECIOS SCANNER ═════════════════════════════════════ -->
-<div id="price-modal">
-    <div id="price-panel">
-        <p class="fw-bold mb-1" style="font-size:0.7rem; color:#94a3b8; letter-spacing:1px;">PRODUCTO IDENTIFICADO</p>
-        <div id="dup-badge" class="badge-dup">
-            <i class="fas fa-exclamation-triangle mt-1" style="flex-shrink:0;"></i>
-            <span id="dup-text"></span>
-        </div>
-        <textarea id="pm-nombre" class="form-control mb-3"
-            rows="3"
-            placeholder="Nombre del producto"
-            style="resize:none; text-transform:uppercase; font-weight:700; font-size:0.9rem; line-height:1.4; word-break:break-word; white-space:pre-wrap;"></textarea>
-        <div class="row g-2 mb-3">
-            <div class="col-6">
-                <label class="small fw-bold text-muted">COSTO ANAQUEL $</label>
-                <input type="number" id="pm-costo" class="form-control text-danger fw-bold"
-                    placeholder="0.00" step="0.01"
-                    oninput="autoSuggestVenta(this.value)">
-            </div>
-            <div class="col-6">
-                <label class="small fw-bold text-muted">PRECIO VENTA $</label>
-                <input type="number" id="pm-venta" class="form-control text-success fw-bold"
-                    placeholder="0.00" step="0.01">
-            </div>
-        </div>
-        <small class="text-muted d-block mb-3" style="font-size:0.65rem; text-align:center;">
-            💡 Precio sugerido y redondeado automáticamente al múltiplo de $10 más cercano
-        </small>
-        <button class="btn btn-success w-100 py-3 rounded-pill fw-bold mb-2" onclick="confirmPrices()">CONFIRMAR Y RELLENAR</button>
-        <button class="btn btn-outline-secondary w-100 rounded-pill" onclick="cancelPrices()" style="border:none;">CANCELAR — VOLVER A CÁMARA</button>
-    </div>
-</div>
-
-<!-- ══ MODAL CONFIRMACIÓN DUPLICADO ═════════════════════════════ -->
-<div id="dup-confirm-modal">
-    <div style="background:white; border-radius:24px; padding:22px; width:100%; max-width:420px;">
-        <p class="fw-bold mb-1" style="font-size:0.7rem; color:#94a3b8; letter-spacing:1px;">⚠ POSIBLE DUPLICADO</p>
-        <p style="font-size:0.82rem; color:#0f172a; margin-bottom:14px;">
-            El producto escaneado <strong id="dcm-escaneado"></strong> coincide parcialmente con los siguientes registros. ¿Es alguno de estos?
-        </p>
-        <div id="dcm-candidatos" style="max-height:200px; overflow-y:auto; margin-bottom:14px;"></div>
-        <button class="btn btn-warning w-100 rounded-pill fw-bold mb-2" onclick="skipDuplicate()">
-            NO — ES UN PRODUCTO NUEVO
+<!-- RESULT MODAL -->
+<div id="result-modal">
+    <div id="result-panel">
+        <p class="fw-bold mb-3" style="font-size:0.7rem; color:#94a3b8; letter-spacing:1px;">TEXTO EXTRAÍDO</p>
+        <textarea id="result-text" class="form-control mb-3" rows="6" readonly style="resize:none; font-family:'Courier New',monospace;"></textarea>
+        <button class="btn btn-success w-100 rounded-pill fw-bold mb-2" onclick="copyResultText()">
+            <i class="fas fa-copy me-2"></i>COPIAR TEXTO
         </button>
-        <button class="btn btn-outline-secondary w-100 rounded-pill" onclick="closeDupConfirm()" style="border:none; font-size:0.8rem;">
-            CANCELAR — VOLVER A CÁMARA
+        <button class="btn btn-primary w-100 rounded-pill fw-bold mb-2" onclick="addToOutput()">
+            <i class="fas fa-plus me-2"></i>AGREGAR AL HISTORIAL
+        </button>
+        <button class="btn btn-outline-secondary w-100 rounded-pill" onclick="closeResult()" style="border:none;">
+            ✕ CERRAR
         </button>
     </div>
 </div>
 
-<div class="container d-flex justify-content-center align-items-center" style="min-height:100vh;">
-    <div class="card-custom w-100" style="max-width:480px;">
-        <h5 class="fw-bold mb-4 text-center text-primary">Escáner de Productos</h5>
-        <div class="mb-3">
-            <label class="text-uppercase">Nombre del Producto</label>
-            <input type="text" id="scanned-product-name" class="form-control text-uppercase" placeholder="Producto escaneado">
-        </div>
-        <div class="row g-2 mb-4">
-            <div class="col-6">
-                <label class="text-uppercase">Costo Anaquel</label>
-                <input type="number" id="scanned-product-cost" class="form-control fw-bold text-danger" step="0.01" placeholder="0.00">
-            </div>
-            <div class="col-6">
-                <label class="text-uppercase">Precio Venta</label>
-                <input type="number" id="scanned-product-price" class="form-control fw-bold text-success" step="0.01" placeholder="0.00">
-            </div>
-        </div>
-        <button class="btn btn-primary w-100 py-3 rounded-pill fw-bold" onclick="openScannerModal()">
-            <i class="fas fa-camera me-2"></i>ESCANEAR PRODUCTO
-        </button>
-    </div>
-</div>
-
-<!-- ══ SCANNER MODAL ═════════════════════════════════════════════ -->
+<!-- SCANNER MODAL -->
 <div id="ia-modal">
     <video id="cam-preview-ia" autoplay playsinline muted></video>
     <div class="scan-guide"></div>
@@ -170,94 +317,94 @@
     </div>
 </div>
 
+<!-- MAIN INTERFACE -->
+<div class="container-main">
+    <div class="card-custom">
+        <h5 class="fw-bold mb-4 text-center" style="color:var(--primary);">
+            <i class="fas fa-image me-2" style="color:var(--accent);"></i>Escáner de Imágenes
+        </h5>
+        <button class="btn btn-primary w-100 py-3 rounded-pill fw-bold mb-3" onclick="openScannerModal()">
+            <i class="fas fa-camera me-2"></i>ABRIR ESCÁNER
+        </button>
+    </div>
+
+    <div class="card-custom">
+        <h6 class="fw-bold mb-3" style="color:var(--primary);">Historial de Escaneos</h6>
+        <div id="output-area" class="empty">
+            Aquí aparecerá el texto de tus escaneos...
+        </div>
+        <button class="btn btn-outline-secondary w-100 rounded-pill mt-3" onclick="clearOutput()">
+            <i class="fas fa-trash me-2"></i>LIMPIAR HISTORIAL
+        </button>
+    </div>
+</div>
+
 
 <script>
 /* ══════════════════════════════════════════════════════════════════
-   FIREBASE UNIFICADA — ofertas-rapidas-con-scanner (cuenta personal)
-══════════════════════════════════════════════════════════════════ */
-const firebaseConfig = {
-    apiKey:            "AIzaSyB3kiLskvkV6cJ0byaCg_zqe-GIWM3jelI",
-    authDomain:        "ofertas-rapidas-con-scanner.firebaseapp.com",
-    projectId:         "ofertas-rapidas-con-scanner",
-    storageBucket:     "ofertas-rapidas-con-scanner.firebasestorage.app",
-    messagingSenderId: "1093159890306",
-    appId:             "1:1093159890306:web:67211603ff99753207f39b"
-};
-firebase.initializeApp(firebaseConfig);
-const db      = firebase.firestore();
-const storage = firebase.storage();
-
-// Helper de colección — evita bug de slash en path
-const APP_ID = 'yaute-v1-shared';
-function col(name) {
-    return db.collection('artifacts').doc(APP_ID)
-             .collection('public').doc('data').collection(name);
-}
-
-/* ══════════════════════════════════════════════════════════════════
    ESTADO GLOBAL
 ══════════════════════════════════════════════════════════════════ */
-window.state = { products: [] };
-
-// Scanner
-let scannerStream   = null;
-let pendingNombre   = '';
-let pendingCanvas   = null;
-let pendingExisteId = null;
+let scannerStream = null;
+let pendingScannedText = '';
+let pendingCanvas = null;
+let outputArray = [];
 
 /* ══════════════════════════════════════════════════════════════════
    TOAST
 ══════════════════════════════════════════════════════════════════ */
-const toastScanner = (msg, color = '#10b981') => {
+const showToast = (msg, color = '#10b981') => {
     const el = document.getElementById('toast-msg');
-    el.textContent = msg; el.style.background = color; el.style.display = 'block';
+    el.textContent = msg;
+    el.style.background = color;
+    el.style.display = 'block';
     clearTimeout(el._t);
     el._t = setTimeout(() => el.style.display = 'none', 3000);
 };
 
 /* ══════════════════════════════════════════════════════════════════
-   SYNC FIREBASE — SOLO CARGAR PRODUCTOS PARA DETECCIÓN DE DUPLICADOS
-══════════════════════════════════════════════════════════════════ */
-function startSyncProducts() {
-    // Verificar API key Gemini
-    if (!localStorage.getItem('yaute_key_v3310')) {
-        document.getElementById('key-config-modal').style.display = 'flex';
-    }
-
-    col('products').onSnapshot(snap => {
-        window.state.products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        console.log(`Productos cargados: ${window.state.products.length}`);
-    }, err => {
-        console.error('Sync Products Error:', err.message);
-    });
-}
-
-/* ══════════════════════════════════════════════════════════════════
-   SCANNER — API KEY GEMINI
+   API KEY MANAGEMENT
 ══════════════════════════════════════════════════════════════════ */
 function saveGeminiKey() {
     const val = document.getElementById('user-gemini-key').value.trim();
-    if (val && val.length > 10) { localStorage.setItem('yaute_key_v3310', val); document.getElementById('key-config-modal').style.display = 'none'; toastScanner("✅ Key activada"); }
-    else toastScanner("Key inválida", '#ef4444');
+    if (val && val.length > 10) {
+        localStorage.setItem('yaute_key_v3310', val);
+        document.getElementById('key-config-modal').style.display = 'none';
+        showToast('✅ Key guardada correctamente');
+    } else {
+        showToast('⚠ Key inválida', '#ef4444');
+    }
 }
+
 function changeGeminiKey() {
     document.getElementById('user-gemini-key').value = localStorage.getItem('yaute_key_v3310') || '';
     document.getElementById('key-config-modal').style.display = 'flex';
 }
 
+function checkApiKey() {
+    if (!localStorage.getItem('yaute_key_v3310')) {
+        document.getElementById('key-config-modal').style.display = 'flex';
+        return false;
+    }
+    return true;
+}
+
 /* ══════════════════════════════════════════════════════════════════
-   SCANNER — CÁMARA
+   SCANNER CAMERA
 ══════════════════════════════════════════════════════════════════ */
 async function openScannerModal() {
+    if (!checkApiKey()) return;
     document.getElementById('ia-modal').style.display = 'flex';
     try {
-        scannerStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'environment', width:{ideal:1920}, height:{ideal:1080} } });
+        scannerStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
+        });
         document.getElementById('cam-preview-ia').srcObject = scannerStream;
     } catch(e) {
-        toastScanner("Error de cámara: " + e.message, '#ef4444');
+        showToast('❌ Error de cámara: ' + e.message, '#ef4444');
         closeScanner();
     }
 }
+
 function closeScanner() {
     if (scannerStream) scannerStream.getTracks().forEach(t => t.stop());
     scannerStream = null;
@@ -265,59 +412,45 @@ function closeScanner() {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   SCANNER — PRECIO SUGERIDO REDONDEADO A MÚLTIPLOS DE $10
-══════════════════════════════════════════════════════════════════ */
-function redondearA10(valor) {
-    var entero = Math.ceil(valor);
-    var resto  = entero % 10;
-    if (resto === 0) return entero;
-    return resto < 5 ? entero - resto : entero + (10 - resto);
-}
-
-function autoSuggestVenta(costoStr) {
-    var costo = parseFloat(costoStr);
-    var ventaInput = document.getElementById('pm-venta');
-    if (!isNaN(costo) && costo > 0) {
-        var prev    = parseFloat(ventaInput.dataset.suggested || '0');
-        var current = parseFloat(ventaInput.value || '0');
-        if (!ventaInput.value || Math.abs(current - prev) < 0.01) {
-            var base     = costo + 5;
-            var sugerido = redondearA10(base);
-            ventaInput.value = sugerido.toFixed(2);
-            ventaInput.dataset.suggested = sugerido.toFixed(2);
-        }
-    }
-}
-
-/* ══════════════════════════════════════════════════════════════════
-   SCANNER — CORRECCIÓN DE ORIENTACIÓN (portrait siempre)
+   CAPTURE AND ORIENTATION CORRECTION
 ══════════════════════════════════════════════════════════════════ */
 function captureOrientado(video) {
-    const vw = video.videoWidth, vh = video.videoHeight;
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
     const c = document.createElement('canvas');
     const ctx = c.getContext('2d');
+
     if (vh >= vw) {
         // Ya es portrait
-        c.width = vw; c.height = vh;
+        c.width = vw;
+        c.height = vh;
         ctx.drawImage(video, 0, 0);
     } else {
         // Landscape → rotar 90° a portrait
-        c.width = vh; c.height = vw;
-        ctx.translate(c.width/2, c.height/2);
+        c.width = vh;
+        c.height = vw;
+        ctx.translate(c.width / 2, c.height / 2);
         ctx.rotate(Math.PI / 2);
-        ctx.drawImage(video, -vw/2, -vh/2, vw, vh);
+        ctx.drawImage(video, -vw / 2, -vh / 2, vw, vh);
     }
     return c;
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   SCANNER — CAPTURA + IA + DETECCIÓN DUPLICADOS
+   CAPTURE + GEMINI OCR
 ══════════════════════════════════════════════════════════════════ */
 async function captureIA() {
-    const key   = localStorage.getItem('yaute_key_v3310');
-    if (!key) { changeGeminiKey(); return; }
+    const key = localStorage.getItem('yaute_key_v3310');
+    if (!key) {
+        changeGeminiKey();
+        return;
+    }
+
     const video = document.getElementById('cam-preview-ia');
-    if (!video.srcObject || video.videoWidth === 0) { toastScanner("Cámara no lista", '#f59e0b'); return; }
+    if (!video.srcObject || video.videoWidth === 0) {
+        showToast('⚠ Cámara no lista', '#f59e0b');
+        return;
+    }
 
     pendingCanvas = captureOrientado(video);
     const b64 = pendingCanvas.toDataURL('image/jpeg', 0.88).split(',')[1];
@@ -329,55 +462,31 @@ async function captureIA() {
     try {
         const res = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`,
-            { method:'POST', headers:{'Content-Type':'application/json'},
-              body: JSON.stringify({ contents:[{ parts:[
-                  { inline_data:{ mime_type:'image/jpeg', data:b64 } },
-                  { text:"Eres un lector experto de etiquetas de productos de consumo en México. Analiza la imagen y extrae: 1) Marca comercial, 2) Nombre del producto, 3) Presentación (gramaje, volumen, número de piezas, sabor o variante si aparece). Responde SOLO con el resultado en UNA LÍNEA en MAYÚSCULAS con el formato: MARCA NOMBRE PRESENTACIÓN. Sin explicaciones, sin puntos, sin saltos de línea." }
-              ]}], generationConfig:{ temperature:0.1, maxOutputTokens:120 } })
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [
+                            { inline_data: { mime_type: 'image/jpeg', data: b64 } },
+                            { text: 'Extrae TODO el texto visible en esta imagen. Presenta el resultado de forma clara y legible.' }
+                        ]
+                    }],
+                    generationConfig: { temperature: 0.3, maxOutputTokens: 1000 }
+                })
             }
         );
+
         const data = await res.json();
         if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
-        pendingNombre = data.candidates[0].content.parts[0].text.trim().toUpperCase();
 
-        const palabrasEsc = pendingNombre.split(' ').filter(w => w.length >= 4);
-        const candidatos = window.state.products.filter(p => {
-            const g = (p.nombre||'').toUpperCase().trim();
-            if (g === pendingNombre) return true;
-            if (g.length >= 6 && (pendingNombre.includes(g) || g.includes(pendingNombre))) return true;
-            const pg = g.split(' ').filter(w => w.length >= 4);
-            return palabrasEsc.filter(w => pg.includes(w)).length >= 2;
-        });
-
-        document.getElementById('pm-nombre').value = pendingNombre;
-
-        if (candidatos.length === 1 && (candidatos[0].nombre||'').toUpperCase().trim() === pendingNombre) {
-            pendingExisteId = candidatos[0].id;
-            document.getElementById('pm-venta').value = candidatos[0].precio || '';
-            document.getElementById('pm-costo').value = candidatos[0].costo  || '';
-            const badge = document.getElementById('dup-badge');
-            document.getElementById('dup-text').innerHTML =
-                '<strong>¡Ya registrado!</strong><br>"' + candidatos[0].nombre + '"<br>' +
-                'Venta: $' + (candidatos[0].precio||0) + ' | Costo: $' + (candidatos[0].costo||0) +
-                '<br><em>Precios precargados, puedes modificar.</em>';
-            badge.classList.add('show');
-            document.getElementById('price-modal').style.display = 'flex';
-        } else if (candidatos.length >= 1) {
-            pendingExisteId = null;
-            document.getElementById('pm-venta').value = '';
-            document.getElementById('pm-costo').value = '';
-            document.getElementById('dup-badge').classList.remove('show');
-            showDupConfirm(candidatos);
-        } else {
-            pendingExisteId = null;
-            document.getElementById('pm-venta').value = '';
-            document.getElementById('pm-costo').value = '';
-            document.getElementById('dup-badge').classList.remove('show');
-            document.getElementById('price-modal').style.display = 'flex';
-        }
+        pendingScannedText = data.candidates[0].content.parts[0].text.trim();
+        
+        closeScanner();
+        showResultModal();
 
     } catch(e) {
-        toastScanner("Error IA: " + e.message, '#ef4444');
+        showToast('❌ Error IA: ' + e.message, '#ef4444');
     } finally {
         snapIcon.className = 'fas fa-camera fa-2x text-primary';
         document.getElementById('snap-btn').style.pointerEvents = 'auto';
@@ -385,106 +494,89 @@ async function captureIA() {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   SCANNER — GESTIÓN DE DUPLICADOS
+   RESULT MODAL
 ══════════════════════════════════════════════════════════════════ */
-function showDupConfirm(candidatos) {
-    document.getElementById('dcm-escaneado').textContent = '"' + pendingNombre + '"';
-    document.getElementById('dcm-candidatos').innerHTML = candidatos.map(function(p) {
-        var safeId    = (p.id    || '').replace(/'/g, '');
-        var safePrecio = parseFloat(p.precio) || 0;
-        var safeCosto  = parseFloat(p.costo)  || 0;
-        var safeNombre = (p.nombre || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        return '<div class="dup-candidate" data-id="' + safeId + '" data-precio="' + safePrecio + '" data-costo="' + safeCosto + '">' +
-               '<div style="font-weight:800; font-size:0.85rem; color:#0f172a; text-transform:uppercase;">' + safeNombre + '</div>' +
-               '<div style="font-size:0.72rem; color:#64748b; margin-top:2px;">' +
-               'Venta: <span style="color:#10b981; font-weight:700;">$' + safePrecio + '</span> &nbsp;|&nbsp; ' +
-               'Costo: <span style="color:#ef4444; font-weight:700;">$' + safeCosto + '</span></div>' +
-               '<div style="font-size:0.65rem; color:#3b82f6; margin-top:4px; font-weight:700;">✓ SÍ, ES ESTE PRODUCTO</div>' +
-               '</div>';
-    }).join('');
-    document.getElementById('dcm-candidatos').onclick = function(e) {
-        var card = e.target.closest('.dup-candidate');
-        if (card) selectDuplicate(card.dataset.id, parseFloat(card.dataset.precio), parseFloat(card.dataset.costo));
-    };
-    document.getElementById('dup-confirm-modal').style.display = 'flex';
+function showResultModal() {
+    document.getElementById('result-text').value = pendingScannedText;
+    document.getElementById('result-modal').style.display = 'flex';
 }
 
-function selectDuplicate(id, precio, costo) {
-    pendingExisteId = id;
-    document.getElementById('pm-venta').value = precio || '';
-    document.getElementById('pm-costo').value = costo  || '';
-    var p = window.state.products.find(function(x){ return x.id === id; });
-    if (p) {
-        var badge = document.getElementById('dup-badge');
-        document.getElementById('dup-text').innerHTML =
-            '<strong>Seleccionado:</strong> "' + p.nombre + '"<br>Precios precargados, puedes modificar.';
-        badge.classList.add('show');
+function closeResult() {
+    document.getElementById('result-modal').style.display = 'none';
+    pendingScannedText = '';
+    pendingCanvas = null;
+}
+
+function copyResultText() {
+    const text = document.getElementById('result-text').value;
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('✅ Texto copiado');
+    }).catch(() => {
+        showToast('⚠ No se pudo copiar', '#f59e0b');
+    });
+}
+
+function addToOutput() {
+    const text = document.getElementById('result-text').value;
+    if (!text.trim()) {
+        showToast('⚠ Texto vacío', '#f59e0b');
+        return;
     }
-    if (!precio && costo) autoSuggestVenta(String(costo));
-    document.getElementById('dup-confirm-modal').style.display = 'none';
-    document.getElementById('price-modal').style.display = 'flex';
-}
 
-function skipDuplicate() {
-    pendingExisteId = null;
-    document.getElementById('dup-badge').classList.remove('show');
-    document.getElementById('pm-venta').value = '';
-    document.getElementById('pm-costo').value = '';
-    document.getElementById('dup-confirm-modal').style.display = 'none';
-    document.getElementById('price-modal').style.display = 'flex';
-}
+    outputArray.push({
+        timestamp: new Date().toLocaleString(),
+        text: text
+    });
 
-function closeDupConfirm() {
-    document.getElementById('dup-confirm-modal').style.display = 'none';
-    pendingNombre = ''; pendingCanvas = null; pendingExisteId = null;
+    updateOutput();
+    showToast('✅ Agregado al historial');
+    closeResult();
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   SCANNER — CONFIRMAR PRECIOS (rellena formulario + Storage + Firestore)
+   OUTPUT MANAGEMENT
 ══════════════════════════════════════════════════════════════════ */
-async function confirmPrices() {
-    const nombre = document.getElementById('pm-nombre').value.replace(/\n/g,' ').trim().toUpperCase();
-    const venta  = parseFloat(document.getElementById('pm-venta').value) || 0;
-    const costo  = parseFloat(document.getElementById('pm-costo').value) || 0;
-    if (!nombre) { toastScanner("Nombre vacío", '#ef4444'); return; }
-
-    document.getElementById('price-modal').style.display = 'none';
-
-    // Subir foto a Storage
-    let fotoUrl = '';
-    if (pendingCanvas) {
-        try {
-            const blob = await new Promise(r => pendingCanvas.toBlob(r, 'image/jpeg', 0.82));
-            const ref  = storage.ref(`productos/${Date.now()}_${nombre.replace(/\s+/g,'_')}.jpg`);
-            await ref.put(blob); fotoUrl = await ref.getDownloadURL();
-        } catch(e) { console.warn('Storage:', e.message); }
+function updateOutput() {
+    const outputArea = document.getElementById('output-area');
+    
+    if (outputArray.length === 0) {
+        outputArea.innerHTML = '';
+        outputArea.className = 'empty';
+        outputArea.textContent = 'Aquí aparecerá el texto de tus escaneos...';
+        return;
     }
 
-    // Guardar / actualizar en Firestore para mantener la lista de productos
-    const data = { nombre, costo, precio:venta };
-    if (fotoUrl) data.foto = fotoUrl;
-    if (pendingExisteId) { await col('products').doc(pendingExisteId).update(data); toastScanner("✅ Producto actualizado en base de datos"); }
-    else                 { await col('products').add(data);                         toastScanner("✅ Producto guardado en base de datos"); }
-
-    // Rellenar el formulario básico
-    document.getElementById('scanned-product-name').value = nombre;
-    document.getElementById('scanned-product-cost').value  = costo.toFixed(2);
-    document.getElementById('scanned-product-price').value = venta.toFixed(2);
-
-    pendingNombre = ''; pendingCanvas = null; pendingExisteId = null;
-    closeScanner();
+    outputArea.className = '';
+    outputArea.innerHTML = outputArray.map((item, idx) => `
+        <div class="scan-result-item">
+            <div style="color:#94a3b8; font-size:0.75rem; margin-bottom:8px;">
+                <strong>#${idx + 1}</strong> — ${item.timestamp}
+            </div>
+            <div style="color:#0f172a; white-space:pre-wrap; word-break:break-word;">
+                ${item.text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+            </div>
+        </div>
+    `).join('');
 }
 
-function cancelPrices() {
-    document.getElementById('price-modal').style.display = 'none';
-    document.getElementById('dup-badge').classList.remove('show');
-    pendingNombre = ''; pendingCanvas = null; pendingExisteId = null;
+function clearOutput() {
+    if (outputArray.length === 0) {
+        showToast('⚠ Historial vacío', '#f59e0b');
+        return;
+    }
+    if (confirm('¿Deseas borrar todo el historial de escaneos?')) {
+        outputArray = [];
+        updateOutput();
+        showToast('✅ Historial limpiado');
+    }
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   ARRANQUE
+   INIT
 ══════════════════════════════════════════════════════════════════ */
-window.onload = startSyncProducts;
+window.onload = () => {
+    checkApiKey();
+};
 </script>
 </body>
 </html>
